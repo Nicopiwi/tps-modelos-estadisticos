@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Una forma de plantear el problema es mediante una regresión lineal donde la variable dependiente sea la respuesta en la escala Likert, y las covariables la edad y variables indicadoras del género. Es decir,
 
 $$
-Likert_i = \beta_{\text{masc}} \text{masc}_i + \beta_{\text{fem}} \text{fem}_i + \beta_{\text{edad}} \text{edad}_i + \epsilon_i
+Likert_i = \beta_{\text{intercept}} + \beta_{\text{masc}} \text{masc}_i + \beta_{\text{fem}} \text{fem}_i + \beta_{\text{edad}} \text{edad}_i + \epsilon_i
 $$
 
 
@@ -29,10 +29,10 @@ $$
 \mathbb{P}(Likert_{i, j} = 1) = \text{Softmax}(z_i)_j
 $$
 
-donde $z_i$ es un vector en $\mathbb{R}^5$ tal que
+donde $z_i$ es un vector en $\mathbb{R}^5$ tal que, para $1 \leq j \leq 5$,
 
 $$
-z_{i, j} = \beta_{\text{masc}, j} \text{masc}_i + \beta_{\text{fem}, j} \text{fem}_i + \beta_{\text{edad}, j} \text{edad}_i
+z_{i, j} = \beta_{\text{intercept, j}} + \beta_{\text{masc}, j} \text{masc}_i + \beta_{\text{fem}, j} \text{fem}_i + \beta_{\text{edad}, j} \text{edad}_i
 $$
 y $\text{Softmax} : \mathbb{R}^p \to \mathbb{R}^p$ es la función
 
