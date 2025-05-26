@@ -20,7 +20,7 @@ Likert_i = \beta_{\text{masc}} \text{masc}_i + \beta_{\text{fem}} \text{fem}_i +
 $$
 
 
-El problema de este enfoque es que $Liker_i$ toma $1,...,5$ como posibles valores. Un problema es que el modelo lineal común asume normalidad en los errores, y por lo tanto en la variable dependiente. En este caso, es una variable discreta con un rango de sólo 5 valores. Por otra parte, se asume que las distancias entre las respuestas son iguales. Por ejemplo, podría no tener sentido considerar que la diferencia entre "Totalmente en desacuerdo" y "En desacuerdo" sea la misma que "En desacuerdo" y "Neutro".
+El problema de este enfoque es que $Likert_i$ toma $1,...,5$ como posibles valores, pero modelo lineal común asume normalidad en los errores, y por lo tanto en la variable dependiente. En este caso, es una variable discreta con un rango de sólo 5 valores. Por otra parte, se asume que las distancias entre las respuestas son iguales. Por ejemplo, podría no tener sentido considerar que la diferencia entre "Totalmente en desacuerdo" y "En desacuerdo" sea la misma que "En desacuerdo" y "Neutro".
 
 
 Otra forma es modelarlo mediante una regresión multinomial. En esta, se modela a la probabilidad de que el individuo $i$ responda la opción $j$ como
