@@ -11,6 +11,51 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r libraries}
+library(tidyverse)
+library(MASS)
+library(broom) 
+library(janitor)   
+library(rsample)
+
+```
+
+## Ejercicio 1
+
+```{r libraries}
+set.seed(123)
+
+df <- read.csv2("data/data.csv", sep="\t") %>%
+  as.data.frame()
+
+# Filtramos outliers
+Q1 <- quantile(df$age, 0.25, na.rm = TRUE)
+Q3 <- quantile(df$age, 0.75, na.rm = TRUE)
+IQR <- Q3 - Q1
+
+limite_inferior <- Q1 - 1.5 * IQR
+limite_superior <- Q3 + 1.5 * IQR
+
+nrow(df %>% 
+  filter(age>limite_superior | age<limite_inferior)
+  )
+
+df <- df %>% 
+  filter(age<limite_superior & age>limite_inferior)
+
+# Split stratificado
+df$strata <- interaction(df$religion, df$gender, df$education, drop = TRUE)
+
+split <- initial_split(df, prop = 0.8, strata = strata)
+
+df_train <- training(split)
+df_test  <- testing(split)
+```
+
+## Ejercicio 2
+
+Se eligió la pregunta Q30: 
+
 ## Ejercicio 3
 
 Una forma de plantear el problema es mediante una regresión lineal donde la variable dependiente sea la respuesta en la escala Likert, y las covariables la edad y variables indicadoras del género. Es decir,
@@ -42,7 +87,123 @@ $$
 Sin embargo, dicho enfoque no es el más apropiado tampoco. Esto se debe a que la variable dependiente no es una variable categórica nominal. Las posibles respuestas tienen un orden, que no se está modelando.
 
 
-```{r cars}
-print("Hello World")
+## Ejercicio 4
+
+TODO: Explicar en palabras
+
+
+Supongamos que la variable respuesta ordinal \( Y \in \{1, 2, \dots, K\} \) surge de una variable latente continua \( Y^* \in \mathbb{R} \), que no observamos directamente, pero que está determinada por un modelo lineal:
+
+$$
+Y^* = \mathbf{x}^\top \boldsymbol{\beta} + \varepsilon
+$$
+
+donde \( \mathbf{x} \) representa el vector de covariables, \( \beta \) los coeficientes del modelo, y \( \varepsilon \sim \text{Logística}(0,1) \) es un término de error con distribución logística estándar.
+
+La variable observada \( Y \) se define a partir de la latente \( Y^* \) mediante una función partida que utiliza umbrales (o puntos de corte) ordenados:
+
+$$
+Y = 
+\begin{cases}
+1 & \text{si } Y^* \leq \theta_1 \\
+2 & \text{si } \theta_1 < Y^* \leq \theta_2 \\
+\vdots \\
+K & \text{si } Y^* > \theta_{K-1}
+\end{cases}
+$$
+
+Estos umbrales satisfacen la condición de orden creciente:
+
+$$
+\theta_1 < \theta_2 < \cdots < \theta_{K-1}
+$$
+
+El modelo logit acumulativo se expresa entonces como:
+
+$$
+P(Y \leq j) = \sigma( \theta_j - \mathbf{x}^\top \boldsymbol{\beta}) \quad \text{para } j = 1, \dots, K-1
+$$
+## Ejercicio 5
+
+
+```{r}
+
+
+df_train_30 <- df_train %>% 
+  filter(Q30 != 0)
+
+df_test_30 <- df_test %>% 
+  filter(Q30 != 0)
+
+#Ordenamos en escala
+df_train_30$Q30_factor <- ordered(df_train_30$Q30,
+                  levels = 1:5,
+                  labels = c("Muy en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Muy de acuerdo"))
+
+df_test_30$Q30_factor <- ordered(df_test_30$Q30,
+                  levels = 1:5,
+                  labels = c("Muy en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Muy de acuerdo"))
+
+modelo_ordinal <- polr(Q30_factor ~ age, data = df_train_30, Hess = TRUE, method = "logistic")
+summary(modelo_ordinal)
+```
+## Ejercicio 6
+
+```{r}
+
+# Entrenamos con todos los datos en este caso
+df_9 <- df %>% 
+  filter(Q9 != 0)
+
+df_9$Q9 <- ordered(df_9$Q9,
+                  levels = 1:5,
+                  labels = c("Muy en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Muy de acuerdo"))
+
+modelo_9 <- polr(Q9 ~ age, data = df_9, Hess = TRUE, method = "logistic")
+summary(modelo_9)
+```
+La función `predict` estima la probabilidad puntual de cada opción.
+
+```{r}
+probabilidades <- predict(modelo_9, newdata = data.frame(age = 25), type = "probs")
+print(probabilidades)
+```
+TODO: Sumar 'De acuerdo' con 'Muy de acuerdo'
+
+## Ejercicio 7
+
+```{r}
+mae <- function(y_true, y_pred) {
+  return(mean(abs(y_true - y_pred)))
+}
 ```
 
+## Ejercicios 8 y 9
+
+
+
+```{r}
+modelo_lineal <- lm(Q30 ~ age, data = df_train_30)
+y_pred_train <- predict(modelo_lineal)
+y_pred_final_train <- pmin(pmax(round(y_pred_train), 1), 5)
+mae_train <- mean(abs(df_train_30$Q30 - y_pred_final_train))
+aciertos_train <- mean(df_train_30$Q30 == y_pred_final_train)
+
+y_pred_test <- predict(modelo_lineal)
+y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)
+mae_test <- mean(abs(df_test_30$Q30 - y_pred_final_test))
+aciertos_test <- mean(df_test_30$Q30 == y_pred_final_test)
+list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
+```
+
+```{r}
+y_pred_train <- predict(modelo_ordinal)
+mae_train <- mean(abs(df_train_30$Q30 - y_pred_train))
+aciertos_train <- mean(df_train_30$Q30 == y_pred_train)
+
+y_pred_test <- predict(modelo_ordinal, newdata = df_test_30)
+y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)
+mae_test <- mean(abs(df_test_30$Q30 - y_pred_final_test))
+aciertos_test <- mean(df_test_30$Q30 == y_pred_final_test)
+list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
+```
