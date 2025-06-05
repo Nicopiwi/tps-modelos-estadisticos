@@ -17,7 +17,6 @@ library(MASS)
 library(broom) 
 library(janitor)   
 library(rsample)
-
 ```
 
 ## Ejercicio 1
@@ -189,21 +188,163 @@ y_pred_final_train <- pmin(pmax(round(y_pred_train), 1), 5)
 mae_train <- mean(abs(df_train_30$Q30 - y_pred_final_train))
 aciertos_train <- mean(df_train_30$Q30 == y_pred_final_train)
 
-y_pred_test <- predict(modelo_lineal)
+y_pred_test <- predict(modelo_lineal, newdata = df_test_30)
 y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)
 mae_test <- mean(abs(df_test_30$Q30 - y_pred_final_test))
 aciertos_test <- mean(df_test_30$Q30 == y_pred_final_test)
+print("Resultados para modelo lineal truncado:")
 list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
 ```
 
 ```{r}
-y_pred_train <- predict(modelo_ordinal)
+y_pred_train <- as.numeric(predict(modelo_ordinal))
 mae_train <- mean(abs(df_train_30$Q30 - y_pred_train))
 aciertos_train <- mean(df_train_30$Q30 == y_pred_train)
 
-y_pred_test <- predict(modelo_ordinal, newdata = df_test_30)
-y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)
-mae_test <- mean(abs(df_test_30$Q30 - y_pred_final_test))
-aciertos_test <- mean(df_test_30$Q30 == y_pred_final_test)
+y_pred_test <- as.numeric(predict(modelo_ordinal, newdata = df_test_30))
+# y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)   innecesario, y_pred_test ya es un 'factor', no es como el modelo lineal
+mae_test <- mean(abs(df_test_30$Q30 - y_pred_test))
+aciertos_test <- mean(df_test_30$Q30 == y_pred_test)
+print("Resultados para modelo ordinal logístico:")
 list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
 ```
+
+Los modelos tuvieron un mal desempeño. Además de que obviamente, solo tienen una variable para predecir, lo más probable es que esté pasando una de estas dos cosas (o ambas): o hay poca varianza en las respuestas a 'Q30' o la edad no tiene nada que ver con 'Q30'.
+Con esto en mente, decidimos ver qué porcentaje de personas respondió cada valor de la escala para 'Q30' y también visualizar la distribución de las edades de las personas que al menos estaban de acuerdo vs las que no.
+
+```{r}
+# Tabulación y porcentaje
+tabla <- table(df$Q30)
+porcentaje <- prop.table(tabla) * 100
+porcentaje_formateado <- round(porcentaje, 2)
+data.frame(Respuesta = names(tabla), Porcentaje = porcentaje_formateado)
+```
+
+
+```{r}
+df$Q30_grupo <- ifelse(df$Q30 %in% 4:5, "De acuerdo (4 o 5)", "No de acuerdo (1 a 3)")
+df_box <- df[!is.na(df$age) & !is.na(df$Q30_grupo), ]
+
+# Boxplot
+boxplot(age ~ Q30_grupo, data = df_box,
+        col = c("#FFA07A", "#90EE90"),
+        main = "Distribución de edad por respuesta a Q30",
+        ylab = "Edad",
+        xlab = "Grupo de respuesta")
+```
+
+Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por lo tanto, es razonable que ninguno de los dos modelos (el lineal truncado y el ordinal) de buenos resultados.
+Ahora, podemos buscar alguna pregunta que sí muestre una diferencia más contundente por edad. Para eso, podemos correr este programa (en vez de mirar un boxplots por cada pregunta) que nos ordene a las preguntas en base a la diferencia de edad que tiene la población de acuerdo y la que no. Para comparar las edades de las poblaciones, vamos a intentar únicamente comparando medias (puede que no haga falta más que esto).
+
+```{r}
+max_dif <- 0
+max_dif_col <- ""
+
+for (col in colnames(df)[1:44]) {
+  df$grupos <- ifelse(df[[col]] %in% 4:5, "De acuerdo", "No de acuerdo")
+  df_box <- df[!is.na(df$age) & !is.na(df[[col]]), ]
+  media_dif <- abs(mean(df_box$age[df_box$grupos == "De acuerdo"]) - mean(df_box$age[df_box$grupos == "No de acuerdo"]))
+  if (media_dif > max_dif) {
+    max_dif_col <- col
+    max_dif <- media_dif
+  }
+}
+
+print(max_dif_col)
+print(max_dif)
+
+```
+
+El programa indica que la pregunta Q23 ("I playfully insult my friends") maximiza la diferencia de medias de las poblaciones a favor y en contra. Veámoslo en el mismo gráfico que hicimos para Q30.
+
+```{r}
+df$Q23_grupo <- ifelse(df$Q23 %in% 4:5, "De acuerdo (4 o 5)", "No de acuerdo (1 a 3)")
+df_box <- df[!is.na(df$age) & !is.na(df$Q23_grupo), ]
+
+boxplot(age ~ Q23_grupo, data = df_box,
+        col = c("#FFA07A", "#90EE90"),
+        main = "Distribución de edad por respuesta a Q23",
+        ylab = "Edad",
+        xlab = "Grupo de respuesta")
+
+table(df$Q23_grupo)
+```
+Podemos observar que ahora sí hay una diferencia entre las edades de las poblaciones de acuerdo y en desacuerdo. Veamos si los modelos predicen mejor la adhesión o no a esta pregunta 'Q23'.
+```{r}
+df_train_23 <- df_train %>% 
+  filter(Q23 != 0)
+
+df_test_23 <- df_test %>% 
+  filter(Q23 != 0)
+
+# Ordenamos en escala
+df_train_23$Q23_factor <- ordered(df_train_23$Q23,
+                  levels = 1:5,
+                  labels = c("Muy en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Muy de acuerdo"))
+
+df_test_23$Q23_factor <- ordered(df_test_23$Q23,
+                  levels = 1:5,
+                  labels = c("Muy en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Muy de acuerdo"))
+
+modelo_ordinal_23 <- polr(Q23_factor ~ age, data = df_train_23, Hess = TRUE, method = "logistic")
+summary(modelo_ordinal_23)
+```
+
+
+```{r}
+modelo_lineal <- lm(Q23 ~ age, data = df_train_23)
+y_pred_train <- predict(modelo_lineal)
+y_pred_final_train <- pmin(pmax(round(y_pred_train), 1), 5)
+mae_train <- mean(abs(df_train_23$Q23 - y_pred_final_train))
+aciertos_train <- mean(df_train_23$Q23 == y_pred_final_train)
+
+y_pred_test <- predict(modelo_lineal, newdata = df_test_23)
+y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)
+mae_test <- mean(abs(df_test_23$Q23 - y_pred_final_test))
+aciertos_test <- mean(df_test_23$Q23 == y_pred_final_test)
+print("Resultados para modelo lineal truncado:")
+list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
+```
+
+
+```{r}
+y_pred_train <- as.numeric(predict(modelo_ordinal_23))
+mae_train <- mean(abs(df_train_23$Q23 - y_pred_train))
+aciertos_train <- mean(df_train_23$Q23 == y_pred_train)
+
+y_pred_test <- as.numeric(predict(modelo_ordinal_23, newdata = df_test_23))
+# y_pred_final_test <- pmin(pmax(round(y_pred_test), 1), 5)   innecesario, y_pred_test ya es un 'factor', no es como el modelo lineal
+mae_test <- mean(abs(df_test_23$Q23 - y_pred_test))
+aciertos_test <- mean(df_test_23$Q23 == y_pred_test)
+print("Resultados para modelo ordinal logístico:")
+list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
+```
+
+¿Y si en vez de medir la exactitud en base a qué porcentaje de la población el modelo predijo exactamente su respuesta (1 a 5), intentaramos medir a cuántos le acierta sobre si están al menos a favor o no? 
+
+```{r}
+
+# Verdadero sentimiento
+grupo_real_train <- ifelse(df_train_23$Q23 %in% 4:5, "a_favor", "no_a_favor")
+grupo_real_test  <- ifelse(df_test_23$Q23  %in% 4:5, "a_favor", "no_a_favor")
+
+# Predicción de sentimiento
+grupo_pred_train <- ifelse(y_pred_train %in% 4:5, "a_favor", "no_a_favor")
+grupo_pred_test  <- ifelse(y_pred_test  %in% 4:5, "a_favor", "no_a_favor")
+
+# 3. Exactitud en clasificar a favor vs no a favor
+acierto_a_favor_train <- mean(grupo_real_train == grupo_pred_train)
+acierto_a_favor_test  <- mean(grupo_real_test  == grupo_pred_test)
+
+# 4. Mostrar todo
+print("Resultados para modelo ordinal logístico:")
+list(
+  MAE_train = mae_train,
+  MAE_test = mae_test,
+  exactitud_train = aciertos_train,
+  exactitud_test = aciertos_test,
+  exactitud_grupo_train = acierto_a_favor_train,
+  exactitud_grupo_test = acierto_a_favor_test
+)
+```
+
