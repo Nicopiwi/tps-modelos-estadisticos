@@ -126,8 +126,6 @@ $$
 
 
 ```{r}
-
-
 df_train_30 <- df_train %>% 
   filter(Q30 != 0)
 
@@ -346,5 +344,48 @@ list(
   exactitud_grupo_train = acierto_a_favor_train,
   exactitud_grupo_test = acierto_a_favor_test
 )
+```
+
+```{r}
+library(rstanarm)
+```
+```{r}
+modelo_bayes <- stan_polr(
+  Q30_factor ~ age,
+  data = df_train_30,
+  prior = normal(0, 2),
+  seed = 1,
+  chains = 1,
+  refresh = 1,
+  iter = 50
+)
+
+
+modelo_bayes <- stan_polr(
+  Q30_factor ~ age,
+  data = df_train_30,
+  prior = R2(location = 0.4, what = "mean"),  # ~equivale a varianza intermedia en β
+  seed = 1,
+  chains = 1,
+  iter= 50,
+  refresh = 5
+)
+
+for (i in (1:10)) {
+  location_mod = i/25
+  modelo_bayes <- stan_polr(
+    Q30_factor ~ age,
+    data = df_train_30,
+    prior = R2(location = location_mod, what = "mean"),  # ~equivale a varianza intermedia en β
+    seed = 1,
+    chains = 1,
+    iter= 50,
+    refresh = 5
+  )
+  
+  posterior <- as.data.frame(modelo_bayes)
+  hist(posterior$age, breaks=40, main="Posterior de β (edad)")
+}
+
 ```
 
