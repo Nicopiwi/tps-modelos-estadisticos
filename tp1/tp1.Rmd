@@ -17,6 +17,7 @@ library(MASS)
 library(broom) 
 library(janitor)   
 library(rsample)
+
 ```
 
 ## Ejercicio 1
@@ -88,44 +89,19 @@ Sin embargo, dicho enfoque no es el más apropiado tampoco. Esto se debe a que l
 
 ## Ejercicio 4
 
-TODO: Explicar en palabras
-
-
-Supongamos que la variable respuesta ordinal \( Y \in \{1, 2, \dots, K\} \) surge de una variable latente continua \( Y^* \in \mathbb{R} \), que no observamos directamente, pero que está determinada por un modelo lineal:
+El modelo de regresión ordinal es un modelo de clasificación que a diferencia de la regresión multinomial, permite tener en cuenta un orden de las categorías que puede tomar la variable dependiente $Y$, como ocurre con las escalas Likert. A diferencia de la regresión multinomial donde se busca estimar la función de probabilidad puntual de la distribución de categorías dados los datos mediante un modelo lineal generalizado, ahora se busca estimar la función de distribución acumulada de las categorías, teniendo en cuenta su orden. Es decir, supongamos que tenemos $K$ categorías. Dada $1 \leq j \leq K$ una categoría, se busca estimar $P(Y \leq j)$. La forma en la que se realiza esto es la siguiente:
 
 $$
-Y^* = \mathbf{x}^\top \boldsymbol{\beta} + \varepsilon
+\widehat{P(Y \leq j)} := g(\theta_j - \mathbf{x}^\top \boldsymbol{\beta})
 $$
+donde los $\theta_j$ son parámetros denominados *umbrales*, que están retringidos a $\theta_1 < \theta_2 < \cdots < \theta_{K-1}$, $x$ son las covariables, y $\beta$ son los predictores. Además, $g:\mathbb{R} \to [0, 1]$ es una función de link. Si la función de link es la función logística, al modelo se lo conoce como modelo *logit*. Si la función de link es la función de distribución acumulada de una normal estándar, se lo conoce como *probit*.
 
-donde \( \mathbf{x} \) representa el vector de covariables, \( \beta \) los coeficientes del modelo, y \( \varepsilon \sim \text{Logística}(0,1) \) es un término de error con distribución logística estándar.
-
-La variable observada \( Y \) se define a partir de la latente \( Y^* \) mediante una función partida que utiliza umbrales (o puntos de corte) ordenados:
-
-$$
-Y = 
-\begin{cases}
-1 & \text{si } Y^* \leq \theta_1 \\
-2 & \text{si } \theta_1 < Y^* \leq \theta_2 \\
-\vdots \\
-K & \text{si } Y^* > \theta_{K-1}
-\end{cases}
-$$
-
-Estos umbrales satisfacen la condición de orden creciente:
-
-$$
-\theta_1 < \theta_2 < \cdots < \theta_{K-1}
-$$
-
-El modelo logit acumulativo se expresa entonces como:
-
-$$
-P(Y \leq j) = \sigma( \theta_j - \mathbf{x}^\top \boldsymbol{\beta}) \quad \text{para } j = 1, \dots, K-1
-$$
 ## Ejercicio 5
 
 
 ```{r}
+
+
 df_train_30 <- df_train %>% 
   filter(Q30 != 0)
 
@@ -177,7 +153,7 @@ mae <- function(y_true, y_pred) {
 
 ## Ejercicios 8 y 9
 
-
+Entrenamos y predecimos con el modelo lineal truncado (ejercicio 8)
 
 ```{r}
 modelo_lineal <- lm(Q30 ~ age, data = df_train_30)
@@ -194,6 +170,9 @@ print("Resultados para modelo lineal truncado:")
 list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
 ```
 
+Entrenamos y predecimos con el modelo de regresión ordinal (ejercicio 9)
+
+
 ```{r}
 y_pred_train <- as.numeric(predict(modelo_ordinal))
 mae_train <- mean(abs(df_train_30$Q30 - y_pred_train))
@@ -207,7 +186,9 @@ print("Resultados para modelo ordinal logístico:")
 list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
 ```
 
-Los modelos tuvieron un mal desempeño. Además de que obviamente, solo tienen una variable para predecir, lo más probable es que esté pasando una de estas dos cosas (o ambas): o hay poca varianza en las respuestas a 'Q30' o la edad no tiene nada que ver con 'Q30'.
+
+Los modelos tuvieron un mal desempeño. Además de que solo tienen una variable para predecir, lo más probable es que esté pasando una de estas dos cosas (o ambas): o hay poca varianza en las respuestas a 'Q30' o la edad no es un buen predictor de 'Q30'.
+
 Con esto en mente, decidimos ver qué porcentaje de personas respondió cada valor de la escala para 'Q30' y también visualizar la distribución de las edades de las personas que al menos estaban de acuerdo vs las que no.
 
 ```{r}
@@ -232,6 +213,50 @@ boxplot(age ~ Q30_grupo, data = df_box,
 ```
 
 Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por lo tanto, es razonable que ninguno de los dos modelos (el lineal truncado y el ordinal) de buenos resultados.
+
+TODO: Cambiar esto para que en vez de que la distribución de clases sea uniforme, tenga la misma distribución de clases que los datos reales de Q30. Para ver que no tiene que ver con eso tampoco.
+
+Por lo tanto, para verificar que el problema está aquí, decidimos crear datos sintéticos donde se observen diferencias en las distribuciones de edades, y ver si el modelo ajusta de manera razonable a los datos.
+
+```{r}
+set.seed(123)  # Para reproducibilidad
+
+n_total <- 1000
+
+n_per_group <- n_total / 5
+
+likert_levels <- 1:5
+age_means <- c(95, 70, 50, 30, 15)
+age_sds   <- c(5, 10, 8, 6, 3)
+
+data_list <- lapply(1:5, function(i) {
+  ages <- rnorm(n_per_group, mean = age_means[i], sd = age_sds[i])
+  ages <- pmin(pmax(ages, 10), 110)
+  data.frame(
+    Q_synthetic = rep(likert_levels[i], n_per_group),
+    age = ages
+  )
+})
+
+df_synthetic <- do.call(rbind, data_list)
+
+boxplot(age ~ Q_synthetic, data = df_synthetic, main = "Edad por respuesta Likert", xlab = "Q_synthetic", ylab = "Edad")
+
+split <- initial_split(df_synthetic, prop = 0.8, strata = Q_synthetic)
+train_data_synth <- training(split)
+test_data_synth  <- testing(split)
+
+train_data_synth$Q_synthetic <- factor(train_data_synth$Q_synthetic, ordered = TRUE)
+test_data_synth$Q_synthetic  <- factor(test_data_synth$Q_synthetic, ordered = TRUE)
+
+modelo_ordinal_synth <- polr(Q_synthetic ~ age, data = train_data_synth, Hess = TRUE)
+
+preds_synth <- predict(modelo_ordinal_synth, newdata = test_data_synth)
+mae_synth <- mae(as.numeric(preds_synth), as.numeric(test_data_synth$Q_synthetic))
+cat("MAE:", mae_synth, "\n")
+```
+El MAE obtenido en el conjunto de test es de $0.14$. Esto implica un buen ajuste para los datos sintéticos, lo que supone que el principal problema viene por la capacidad predictiva de $\beta$.
+
 Ahora, podemos buscar alguna pregunta que sí muestre una diferencia más contundente por edad. Para eso, podemos correr este programa (en vez de mirar un boxplots por cada pregunta) que nos ordene a las preguntas en base a la diferencia de edad que tiene la población de acuerdo y la que no. Para comparar las edades de las poblaciones, vamos a intentar únicamente comparando medias (puede que no haga falta más que esto).
 
 ```{r}
