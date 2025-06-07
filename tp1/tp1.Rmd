@@ -98,6 +98,7 @@ donde los $\theta_j$ son parámetros denominados *umbrales*, que están retringi
 
 ## Ejercicio 5
 
+Filtrando los valores que son $0$ en las respuestas (las consideramos como respuestas inválidas), ajustamos el modelo de regresión ordinal *logit*
 
 ```{r}
 
@@ -212,28 +213,31 @@ boxplot(age ~ Q30_grupo, data = df_box,
         xlab = "Grupo de respuesta")
 ```
 
-Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por lo tanto, es razonable que ninguno de los dos modelos (el lineal truncado y el ordinal) de buenos resultados.
-
-TODO: Cambiar esto para que en vez de que la distribución de clases sea uniforme, tenga la misma distribución de clases que los datos reales de Q30. Para ver que no tiene que ver con eso tampoco.
-
-Por lo tanto, para verificar que el problema está aquí, decidimos crear datos sintéticos donde se observen diferencias en las distribuciones de edades, y ver si el modelo ajusta de manera razonable a los datos.
+Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por lo tanto, es razonable que ninguno de los dos modelos (el lineal truncado y el ordinal) de buenos resultados. Por otra parte, veamos la distribución de las clases en el conjunto de test
 
 ```{r}
-set.seed(123)  # Para reproducibilidad
+hist(df_test_30$Q30, main="Distribución de clases de Q30", xlab = "Respuesta")
+```
+
+A pesar de que hay un desbalance de clases especialmente entre las respuestas **1** y **2**, no parecería que el problema viene por este lado. Por lo tanto, para verificar que el problema en la covariable, decidimos crear datos sintéticos donde se observen diferencias en las distribuciones de edades, y ver si el modelo ajusta de manera razonable a los datos. Para descartar que sea un problema de un posible problema del desbalance de clases, se decidió crear la misma distribución de clases que el conjunto de test.
+
+```{r}
+set.seed(123)
 
 n_total <- 1000
 
-n_per_group <- n_total / 5
+#n_per_group <- n_total / 5
+n_per_group <- n_total*table(df_test_30$Q30)/nrow(df_test_30)
 
 likert_levels <- 1:5
 age_means <- c(95, 70, 50, 30, 15)
 age_sds   <- c(5, 10, 8, 6, 3)
 
 data_list <- lapply(1:5, function(i) {
-  ages <- rnorm(n_per_group, mean = age_means[i], sd = age_sds[i])
+  ages <- rnorm(n_per_group[i], mean = age_means[i], sd = age_sds[i])
   ages <- pmin(pmax(ages, 10), 110)
   data.frame(
-    Q_synthetic = rep(likert_levels[i], n_per_group),
+    Q_synthetic = rep(likert_levels[i], n_per_group[i]),
     age = ages
   )
 })
@@ -253,10 +257,17 @@ modelo_ordinal_synth <- polr(Q_synthetic ~ age, data = train_data_synth, Hess = 
 
 preds_synth <- predict(modelo_ordinal_synth, newdata = test_data_synth)
 mae_synth <- mae(as.numeric(preds_synth), as.numeric(test_data_synth$Q_synthetic))
+
+```
+El MAE obtenido en el conjunto de test es de
+```{r}
 cat("MAE:", mae_synth, "\n")
 ```
-El MAE obtenido en el conjunto de test es de $0.14$. Esto implica un buen ajuste para los datos sintéticos, lo que supone que el principal problema viene por la capacidad predictiva de $\beta$.
 
+Esto implica un buen ajuste para los datos sintéticos, lo que supone que el principal problema viene por la capacidad predictiva de $\beta$.
+
+
+### Maybe delete
 Ahora, podemos buscar alguna pregunta que sí muestre una diferencia más contundente por edad. Para eso, podemos correr este programa (en vez de mirar un boxplots por cada pregunta) que nos ordene a las preguntas en base a la diferencia de edad que tiene la población de acuerdo y la que no. Para comparar las edades de las poblaciones, vamos a intentar únicamente comparando medias (puede que no haga falta más que esto).
 
 ```{r}
@@ -370,6 +381,9 @@ list(
   exactitud_grupo_test = acierto_a_favor_test
 )
 ```
+
+### Ejercicio 10
+
 
 ```{r}
 library(rstanarm)
