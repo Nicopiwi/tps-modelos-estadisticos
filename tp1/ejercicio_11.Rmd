@@ -1,0 +1,150 @@
+---
+title: 'TP 1: Regresión ordinal. Ejercicio 11 (bonus)'
+author: "Nicolás Celie, Martín Peralta, Nicolás Ian Rozenberg"
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, warning=FALSE, message=FALSE, results='hide'}
+library(tidyverse)
+library(cmdstanr)   
+library(rsample)
+library(ggplot2)
+library(glue)
+```
+
+## Ejercicio 11
+
+Para este ejercicio, en vez de la biblioteca `rstan` vamos a utilizar `cmdstanr`, que es una interfaz de Stan para R equivalente, debido a problemas en la instalación de la primera. Ahora, tenemos la libertad de elegir la distribución que queramos directamente para los parámetros. En este caso, eligiremos en primer lugar priors que no funcionarían para el caso de la pregunta Q30, para el coeficiente $\beta$, donde se vio una relación débilmente decreciente entre la edad y la respuesta. Estas son una normal de media $1000$ y varianza $1$, y una de media $100$ y varianza $1$. Luego, se ajustará con tres priors normales centrados en $0$, pero con varianzas distintas. El prior se los puntos de corte $\theta_i$ se fijará en una normal estándar.
+Decidimos hacer un submuestreo a 5000 observaciones estratificado, para que la corrida de MCMC sea más rápida.
+
+```{r}
+# Cargamos los datos
+
+df <- read.csv2("./data/data.csv", sep="\t") %>%
+  as.data.frame()
+
+Q1 <- quantile(df$age, 0.25, na.rm = TRUE)
+Q3 <- quantile(df$age, 0.75, na.rm = TRUE)
+IQR <- Q3 - Q1
+
+limite_inferior <- Q1 - 1.5 * IQR
+limite_superior <- Q3 + 1.5 * IQR
+
+nrow(df %>%
+       filter(age>limite_superior | age<limite_inferior)
+)
+
+df <- df %>%
+  filter(age<limite_superior & age>limite_inferior)
+
+# Filtramos respuestas válidas
+df_filtered <- df %>%
+  filter(Q30 != 0)
+
+# Subsample estratificado
+set.seed(123)
+df_strat <- df_filtered %>%
+  group_by(Q30) %>%
+  sample_frac(size = 5000 / nrow(df_filtered)) %>%
+  ungroup()
+```
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+create_ordinal_regression_stan <- function(prior_beta, prior_theta){
+  ordinal_regression_stan <- glue("
+  data {{
+    int<lower=0> N; // Cantidad de observaciones
+    array[N] int<lower=1, upper=5> y;
+    array[N] real x;
+  }}
+  parameters {{
+    vector[1] beta;
+    ordered[4] theta; // 4 puntos de corte
+  }}
+  model {{
+    beta ~ {prior_beta};
+    theta ~ {prior_theta}; // Todos los thetas tienen el mismo prior
+    for (n in 1:N)
+      y[n] ~ ordered_logistic(x[n] * beta[1], theta);
+  }}
+  ")
+  ordinal_regression_stan
+}
+
+prior_beta_muy_alejado <- "normal(1000, 1)"
+prior_beta_alejado <- "normal(100, 1)"
+prior_beta_centrado_fuerte <- "normal(0, 0.001)"
+prior_beta_centrado_moderado<- "normal(0,1)"
+prior_beta_centrado_debil <- "normal(0, 5)"
+prior_theta <- "normal(0,1)"
+
+
+# Lista de priors
+priors_beta <- list(
+  "Normal(1000,1)" = prior_beta_muy_alejado,
+  "Normal(100,1)" = prior_beta_alejado,
+  "Normal(0,0.001)" = prior_beta_centrado_fuerte,
+  "Normal(0,1)" = prior_beta_centrado_moderado,
+  "Normal(0,5)" = prior_beta_centrado_debil
+)
+
+# Definimos la lista de datos para Stan
+data_list <- list(
+  N = nrow(df_strat),
+  y = df_strat$Q30,
+  x = as.numeric(df_strat[["age"]])
+)
+
+
+posterior_betas <- data.frame()
+
+for (i in seq_along(priors_beta)) {
+  prior_name <- names(priors_beta)[i]
+  prior_code <- priors_beta[[i]]
+
+  print(paste("Ajustando modelo con prior:", prior_name))
+
+  code <- create_ordinal_regression_stan(prior_code, prior_theta)
+  f <- write_stan_file(
+    code,
+    basename = NULL,
+    force_overwrite = FALSE,
+    hash_salt = ""
+  )
+
+  mod <- cmdstan_model(f)
+  fit <- mod$sample(data = data_list, seed = 123, num_samples=300, num_warmup=150, num_chains=1, cores=4)
+
+  beta_samples <- fit$draws("beta", format = "df")
+  beta_df <- data.frame(beta = beta_samples$`beta[1]`, prior = prior_name)
+  
+  posterior_betas <- rbind(posterior_betas, beta_df)
+}
+
+```
+Graficamos las distribuciones a posteriori
+
+```{r}
+ggplot(posterior_betas, aes(x = beta, fill = prior, color = prior)) +
+  geom_density(alpha = 0.3, size = 1) +
+  theme_minimal() +
+  labs(
+    title = "Densidad de las distribuciones a posteriori del parámetro beta",
+    x = expression(beta),
+    y = "Densidad",
+    fill = "Prior",
+    color = "Prior"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "top"
+  )
+```
+Se puede observar que para aquellos priors que imponen más información, tanto por la locación como por la poca varianza, la distribución a posteriori resultante se ve más alejada de donde se encontraría el estimador de máxima verosimilitud.
