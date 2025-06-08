@@ -1,0 +1,1003 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={TP 1: Regresión ordinal},
+  pdfauthor={Nicolás Celie, Martín Peralta, Nicolás Ian Rozenberg},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{TP 1: Regresión ordinal}
+\author{Nicolás Celie, Martín Peralta, Nicolás Ian Rozenberg}
+\date{2025-06-07}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'tidyverse' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'ggplot2' was built under R version 4.4.1
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'tibble' was built under R version 4.4.1
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'tidyr' was built under R version 4.4.1
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'readr' was built under R version 4.4.1
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'dplyr' was built under R version 4.4.1
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'forcats' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'lubridate' was built under R version 4.4.1
+\end{verbatim}
+
+\begin{verbatim}
+## -- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+## v dplyr     1.1.4     v readr     2.1.5
+## v forcats   1.0.0     v stringr   1.5.1
+## v ggplot2   3.5.1     v tibble    3.2.1
+## v lubridate 1.9.3     v tidyr     1.3.1
+## v purrr     1.0.2     
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+## i Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(MASS)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Adjuntando el paquete: 'MASS'
+## 
+## The following object is masked from 'package:dplyr':
+## 
+##     select
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(broom) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'broom' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(janitor)   }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'janitor' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Adjuntando el paquete: 'janitor'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     chisq.test, fisher.test
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(rsample)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'rsample' was built under R version 4.4.3
+\end{verbatim}
+
+\subsection{Ejercicio 1}\label{ejercicio-1}
+
+Dado que al hacer el primer análisis exploratorio nos dimos cuenta que
+había valores de edad completamente irrisorios, sacamos los outliers del
+dataset para tener datos representativos. Luego de ello, realizamos la
+separación en train-test dejando una proporción 80/20.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+
+\NormalTok{df }\OtherTok{\textless{}{-}} \FunctionTok{read.csv2}\NormalTok{(}\StringTok{"data/data.csv"}\NormalTok{, }\AttributeTok{sep=}\StringTok{"}\SpecialCharTok{\textbackslash{}t}\StringTok{"}\NormalTok{) }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{as.data.frame}\NormalTok{()}
+
+\CommentTok{\# Filtramos outliers}
+\NormalTok{Q1 }\OtherTok{\textless{}{-}} \FunctionTok{quantile}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{age, }\FloatTok{0.25}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{Q3 }\OtherTok{\textless{}{-}} \FunctionTok{quantile}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{age, }\FloatTok{0.75}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{IQR }\OtherTok{\textless{}{-}}\NormalTok{ Q3 }\SpecialCharTok{{-}}\NormalTok{ Q1}
+
+\NormalTok{limite\_inferior }\OtherTok{\textless{}{-}}\NormalTok{ Q1 }\SpecialCharTok{{-}} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR}
+\NormalTok{limite\_superior }\OtherTok{\textless{}{-}}\NormalTok{ Q3 }\SpecialCharTok{+} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR}
+
+\NormalTok{df }\OtherTok{\textless{}{-}}\NormalTok{ df  }\SpecialCharTok{|\textgreater{}}  
+  \FunctionTok{filter}\NormalTok{(age}\SpecialCharTok{\textless{}}\NormalTok{limite\_superior,}
+\NormalTok{         age}\SpecialCharTok{\textgreater{}}\NormalTok{limite\_inferior)}
+
+\CommentTok{\# Split Train {-} Test}
+\NormalTok{split }\OtherTok{\textless{}{-}} \FunctionTok{initial\_split}\NormalTok{(df, }\AttributeTok{prop =} \FloatTok{0.8}\NormalTok{)}
+
+\NormalTok{df\_train }\OtherTok{\textless{}{-}} \FunctionTok{training}\NormalTok{(split)}
+\NormalTok{df\_test  }\OtherTok{\textless{}{-}} \FunctionTok{testing}\NormalTok{(split)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Ejercicio 2}\label{ejercicio-2}
+
+Se eligió la pregunta Q30: ``I think horoscopes are fun.''
+
+\subsection{Ejercicio 3}\label{ejercicio-3}
+
+Una forma de plantear el problema es mediante una regresión lineal donde
+la variable dependiente sea la respuesta en la escala Likert, y las
+covariables la edad y variables indicadoras del género. Es decir,
+
+\[
+Likert_i = \beta_{\text{intercept}} + \beta_{\text{masc}} \text{masc}_i + \beta_{\text{fem}} \text{fem}_i + \beta_{\text{edad}} \text{edad}_i + \epsilon_i
+\]
+
+El problema de este enfoque es que \(Likert_i\) toma \(1,...,5\) como
+posibles valores, pero modelo lineal común asume normalidad en los
+errores, y por lo tanto en la variable dependiente. En este caso, es una
+variable discreta con un rango de sólo 5 valores. Por otra parte, se
+asume que las distancias entre las respuestas son iguales. Por ejemplo,
+podría no tener sentido considerar que la diferencia entre ``Totalmente
+en desacuerdo'' y ``En desacuerdo'' sea la misma que ``En desacuerdo'' y
+``Neutro''.
+
+Otra forma es modelarlo mediante una regresión multinomial. En esta, se
+modela a la probabilidad de que el individuo \(i\) responda la opción
+\(j\) como
+
+\[
+\mathbb{P}(Likert_{i, j} = 1) = \text{Softmax}(z_i)_j
+\]
+
+donde \(z_i\) es un vector en \(\mathbb{R}^5\) tal que, para
+\(1 \leq j \leq 5\),
+
+\[
+z_{i, j} = \beta_{\text{intercept, j}} + \beta_{\text{masc}, j} \text{masc}_i + \beta_{\text{fem}, j} \text{fem}_i + \beta_{\text{edad}, j} \text{edad}_i
+\] y \(\text{Softmax} : \mathbb{R}^p \to \mathbb{R}^p\) es la función
+
+\[
+\text{Softmax}(z)_j = \frac{e^{z_j}}{\sum_{j=1}^{p} e^{z_j}}
+\] Sin embargo, dicho enfoque no es el más apropiado tampoco. Esto se
+debe a que la variable dependiente no es una variable categórica
+nominal. Las posibles respuestas tienen un orden, que no se está
+modelando.
+
+\subsection{Ejercicio 4}\label{ejercicio-4}
+
+El modelo de regresión ordinal es un modelo de clasificación que a
+diferencia de la regresión multinomial, permite tener en cuenta un orden
+de las categorías que puede tomar la variable dependiente \(Y\), como
+ocurre con las escalas Likert. A diferencia de la regresión multinomial
+donde se busca estimar la función de probabilidad puntual de la
+distribución de categorías dados los datos mediante un modelo lineal
+generalizado, ahora se busca estimar la función de distribución
+acumulada de las categorías, teniendo en cuenta su orden. Es decir,
+supongamos que tenemos \(K\) categorías. Dada \(1 \leq j \leq K\) una
+categoría, se busca estimar \(P(Y \leq j)\). La forma en la que se
+realiza esto es la siguiente:
+
+\[
+\widehat{P(Y \leq j)} := g(\theta_j - \mathbf{x}^\top \boldsymbol{\beta})
+\] donde los \(\theta_j\) son parámetros denominados \emph{umbrales},
+que están retringidos a \(\theta_1 < \theta_2 < \cdots < \theta_{K-1}\),
+\(x\) son las covariables, y \(\beta\) son los predictores. Además,
+\(g:\mathbb{R} \to [0, 1]\) es una función de link. Si la función de
+link es la función logística, al modelo se lo conoce como modelo
+\emph{logit}. Si la función de link es la función de distribución
+acumulada de una normal estándar, se lo conoce como \emph{probit}.
+
+\subsection{Ejercicio 5}\label{ejercicio-5}
+
+Observamos que había valores que no estaban dentro de la escala
+(particularmente el 0), por lo tanto decidimos filtrarlos ya que no los
+consideramos correctos para Likert. Luego, ajustamos el modelo de
+regresión ordinal \emph{logit}. No sin antes acondicionar la variable
+Q30, convirtiéndola en factor ordenado, para usarla en la función polr.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_train\_30 }\OtherTok{\textless{}{-}}\NormalTok{ df\_train }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{filter}\NormalTok{(Q30 }\SpecialCharTok{!=} \DecValTok{0}\NormalTok{)}
+
+\NormalTok{df\_test\_30 }\OtherTok{\textless{}{-}}\NormalTok{ df\_test }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{filter}\NormalTok{(Q30 }\SpecialCharTok{!=} \DecValTok{0}\NormalTok{)}
+
+\CommentTok{\#Ordenamos en escala}
+\NormalTok{df\_train\_30}\SpecialCharTok{$}\NormalTok{Q30\_factor }\OtherTok{\textless{}{-}} \FunctionTok{ordered}\NormalTok{(df\_train\_30}\SpecialCharTok{$}\NormalTok{Q30,}
+                  \AttributeTok{levels =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{,}
+                  \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Muy en desacuerdo"}\NormalTok{, }\StringTok{"En desacuerdo"}\NormalTok{, }\StringTok{"Neutral"}\NormalTok{, }\StringTok{"De acuerdo"}\NormalTok{, }\StringTok{"Muy de acuerdo"}\NormalTok{))}
+
+\NormalTok{df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30\_factor }\OtherTok{\textless{}{-}} \FunctionTok{ordered}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30,}
+                  \AttributeTok{levels =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{,}
+                  \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Muy en desacuerdo"}\NormalTok{, }\StringTok{"En desacuerdo"}\NormalTok{, }\StringTok{"Neutral"}\NormalTok{, }\StringTok{"De acuerdo"}\NormalTok{, }\StringTok{"Muy de acuerdo"}\NormalTok{))}
+
+\NormalTok{modelo\_ordinal }\OtherTok{\textless{}{-}} \FunctionTok{polr}\NormalTok{(Q30\_factor }\SpecialCharTok{\textasciitilde{}}\NormalTok{ age, }\AttributeTok{data =}\NormalTok{ df\_train\_30, }\AttributeTok{Hess =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{method =} \StringTok{"logistic"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(modelo\_ordinal)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## polr(formula = Q30_factor ~ age, data = df_train_30, Hess = TRUE, 
+##     method = "logistic")
+## 
+## Coefficients:
+##      Value Std. Error t value
+## age -0.024  0.0007619   -31.5
+## 
+## Intercepts:
+##                                 Value    Std. Error t value 
+## Muy en desacuerdo|En desacuerdo  -1.5063   0.0167   -90.1874
+## En desacuerdo|Neutral            -0.9298   0.0165   -56.2942
+## Neutral|De acuerdo               -0.1803   0.0164   -10.9839
+## De acuerdo|Muy de acuerdo         0.8170   0.0166    49.3631
+## 
+## Residual Deviance: 730222.48 
+## AIC: 730232.48
+\end{verbatim}
+
+Obtenemos el ajuste del modelo, que nos devuelve los umbrales y el valor
+de \(\beta\) para la variable age. Vemos que: \(\beta = -0.024\) lo que
+sugiere que al aumentar la edad, la probabilidad de estar en niveles más
+altos en la escala Likert va disminuyendo. Es decir, es más probable que
+una persona más joven esté al menos ``De Acuerdo'' que una persona más
+vieja. \(t-value = -31.5\) lo que sugiere que la variable age tiene
+mucha significancia en la variable respuesta ya que posee un valor
+absoluto relativamente alto.
+
+\subsection{Ejercicio 6}\label{ejercicio-6}
+
+Ahora queremos estimar la probabilidad de que una persona de 25 años
+esté al menos de acuerdo con la frase ``me gustan las armas'' (pregunta
+9). Por lo tanto, como es una pregunta diferente a la que nosotros
+elegimos, vamos a filtrar, desde el dataframe completo, los 0s para esta
+pregunta (ya que el anterior lo habíamos filtrado por los 0s para la
+pregunta Q30).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Entrenamos con todos los datos en este caso}
+\NormalTok{df\_9 }\OtherTok{\textless{}{-}}\NormalTok{ df }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{filter}\NormalTok{(Q9 }\SpecialCharTok{!=} \DecValTok{0}\NormalTok{)}
+
+\NormalTok{df\_9}\SpecialCharTok{$}\NormalTok{Q9 }\OtherTok{\textless{}{-}} \FunctionTok{ordered}\NormalTok{(df\_9}\SpecialCharTok{$}\NormalTok{Q9,}
+                  \AttributeTok{levels =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{,}
+                  \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Muy en desacuerdo"}\NormalTok{, }\StringTok{"En desacuerdo"}\NormalTok{, }\StringTok{"Neutral"}\NormalTok{, }\StringTok{"De acuerdo"}\NormalTok{, }\StringTok{"Muy de acuerdo"}\NormalTok{))}
+
+\NormalTok{modelo\_9 }\OtherTok{\textless{}{-}} \FunctionTok{polr}\NormalTok{(Q9 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ age, }\AttributeTok{data =}\NormalTok{ df\_9, }\AttributeTok{Hess =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{method =} \StringTok{"logistic"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(modelo\_9)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## polr(formula = Q9 ~ age, data = df_9, Hess = TRUE, method = "logistic")
+## 
+## Coefficients:
+##         Value Std. Error t value
+## age -0.003029  0.0006859  -4.416
+## 
+## Intercepts:
+##                                 Value    Std. Error t value 
+## Muy en desacuerdo|En desacuerdo  -0.7365   0.0149   -49.5847
+## En desacuerdo|Neutral            -0.1889   0.0148   -12.7656
+## Neutral|De acuerdo                0.5611   0.0148    37.8235
+## De acuerdo|Muy de acuerdo         1.3279   0.0150    88.2849
+## 
+## Residual Deviance: 894778.59 
+## AIC: 894788.59
+\end{verbatim}
+
+En este caso obtenemos los siguientes parámetros al ajustar:
+\(\beta = -0.003\) al igual que en el caso de la pregunta Q30, al
+aumentar la edad la probabilidad de estar en niveles más altos en la
+escala Likert va disminuyendo. Sin embargo, en este caso el valor es más
+chico, por lo que la respuesta en función de las edades se difumina un
+poco ya que la distancia entre ambos es mucho más pequeña que en Q30
+(que era de -0.024).
+
+\(t-value = -4.4\) aquí también encontramos una diferencia grande con
+respecto a la pregunta Q30, y es que en este caso la significancia no es
+demasiado alta, lo que indica que no incorporamos demasiada información
+relevante a la estimación usando la edad.
+
+A continuación, usamos la función ``predict'', la cual estima la
+probabilidad puntual de cada opción y luego sumamos las instancias ``De
+acuerdo'' y ``Muy de acuerdo'' para responder a la pregunta enunciada.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{probabilidades }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_9, }\AttributeTok{newdata =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{age =} \DecValTok{25}\NormalTok{), }\AttributeTok{type =} \StringTok{"probs"}\NormalTok{)}
+\FunctionTok{print}\NormalTok{(probabilidades)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Muy en desacuerdo     En desacuerdo           Neutral        De acuerdo 
+##         0.3405653         0.1311804         0.1822887         0.1487279 
+##    Muy de acuerdo 
+##         0.1972378
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{DeAcuerdo }\OtherTok{\textless{}{-}}\NormalTok{ probabilidades[}\StringTok{"De acuerdo"}\NormalTok{]}
+\NormalTok{MuyDeAcuerdo }\OtherTok{\textless{}{-}}\NormalTok{ probabilidades[}\StringTok{"Muy de acuerdo"}\NormalTok{]}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste0}\NormalTok{(}\StringTok{"Al menos de acuerdo: "}\NormalTok{, }\FunctionTok{as.numeric}\NormalTok{(DeAcuerdo }\SpecialCharTok{+}\NormalTok{ MuyDeAcuerdo)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Al menos de acuerdo: 0.34596565305203"
+\end{verbatim}
+
+\subsection{Ejercicio 7}\label{ejercicio-7}
+
+Implementamos la función de pérdida:
+
+\[
+L(y, \hat{y}) = \frac{1}{n} \sum_{i=1}^{n} \left| y_i - \hat{y}_i \right|
+\]
+
+La misma corresponde a la función MAE (Mean Absolute Error).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mae }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(y\_true, y\_pred) \{}
+  \FunctionTok{return}\NormalTok{(}\FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(y\_true }\SpecialCharTok{{-}}\NormalTok{ y\_pred)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Ejercicios 8 y 9}\label{ejercicios-8-y-9}
+
+Entrenamos y predecimos con el modelo lineal truncado (ejercicio 8)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{modelo\_lineal }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(Q30 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ age, }\AttributeTok{data =}\NormalTok{ df\_train\_30)}
+\NormalTok{y\_pred\_train }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_lineal)}
+\NormalTok{y\_pred\_final\_train }\OtherTok{\textless{}{-}} \FunctionTok{pmin}\NormalTok{(}\FunctionTok{pmax}\NormalTok{(}\FunctionTok{round}\NormalTok{(y\_pred\_train), }\DecValTok{1}\NormalTok{), }\DecValTok{5}\NormalTok{)}
+\NormalTok{mae\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_train\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_final\_train))}
+\NormalTok{aciertos\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_train\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{==}\NormalTok{ y\_pred\_final\_train)}
+
+\NormalTok{y\_pred\_test }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_lineal, }\AttributeTok{newdata =}\NormalTok{ df\_test\_30)}
+\NormalTok{y\_pred\_final\_test }\OtherTok{\textless{}{-}} \FunctionTok{pmin}\NormalTok{(}\FunctionTok{pmax}\NormalTok{(}\FunctionTok{round}\NormalTok{(y\_pred\_test), }\DecValTok{1}\NormalTok{), }\DecValTok{5}\NormalTok{)}
+\NormalTok{mae\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_final\_test))}
+\NormalTok{aciertos\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{==}\NormalTok{ y\_pred\_final\_test)}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Resultados para modelo lineal truncado:"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Resultados para modelo lineal truncado:"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{list}\NormalTok{(}\AttributeTok{MAE\_train =}\NormalTok{ mae\_train, }\AttributeTok{MAE\_test =}\NormalTok{ mae\_test, }\AttributeTok{exactitud\_train =}\NormalTok{ aciertos\_train, }\AttributeTok{exactitud\_test =}\NormalTok{ aciertos\_test)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $MAE_train
+## [1] 1.295728
+## 
+## $MAE_test
+## [1] 1.289727
+## 
+## $exactitud_train
+## [1] 0.1845297
+## 
+## $exactitud_test
+## [1] 0.1864128
+\end{verbatim}
+
+Obtenemos así, los siguientes resultados:
+
+\[
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Métrica} & \textbf{Train} & \textbf{Test} \\
+\hline
+MAE & 1.3 & 1.29 \\
+\hline
+Exactitud & 0.18 & 0.19 \\
+\hline
+\end{tabular}
+\caption{Regresion Lineal Truncada: Resultados de MAE y Exactitud en los conjuntos de entrenamiento y prueba}
+\end{table}
+\]
+
+Entrenamos y predecimos con el modelo de regresión ordinal (ejercicio 9)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{y\_pred\_train }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{predict}\NormalTok{(modelo\_ordinal))}
+\NormalTok{mae\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_train\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_train))}
+\NormalTok{aciertos\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_train\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{==}\NormalTok{ y\_pred\_train)}
+
+\NormalTok{y\_pred\_test }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{predict}\NormalTok{(modelo\_ordinal, }\AttributeTok{newdata =}\NormalTok{ df\_test\_30))}
+\CommentTok{\# y\_pred\_final\_test \textless{}{-} pmin(pmax(round(y\_pred\_test), 1), 5)   innecesario, y\_pred\_test ya es un \textquotesingle{}factor\textquotesingle{}, no es como el modelo lineal}
+\NormalTok{mae\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_test))}
+\NormalTok{aciertos\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{==}\NormalTok{ y\_pred\_test)}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Resultados para modelo ordinal logístico:"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Resultados para modelo ordinal logístico:"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{list}\NormalTok{(}\AttributeTok{MAE\_train =}\NormalTok{ mae\_train, }\AttributeTok{MAE\_test =}\NormalTok{ mae\_test, }\AttributeTok{exactitud\_train =}\NormalTok{ aciertos\_train, }\AttributeTok{exactitud\_test =}\NormalTok{ aciertos\_test)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $MAE_train
+## [1] 1.945435
+## 
+## $MAE_test
+## [1] 1.956452
+## 
+## $exactitud_train
+## [1] 0.2725172
+## 
+## $exactitud_test
+## [1] 0.2680398
+\end{verbatim}
+
+\$\$
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Métrica} & \textbf{Train} & \textbf{Test} \\
+\hline
+MAE & 1.95 & 1.96 \\
+\hline
+Exactitud & 0.27 & 0.27 \\
+\hline
+\end{tabular}
+\caption{Regresion Ordinal: Resultados de MAE y Exactitud en los conjuntos de entrenamiento y prueba}
+\end{table}
+
+\$\$
+
+Los modelos tuvieron un mal desempeño, dado que tener una distancia
+mayor a 1 en la escala Likert puede ser un cambio de respuesta de una
+categoría a otra y eso puede significar pasar, por ejemplo, de un
+``Neutro'' a un ``De acuerdo'' (un abismo de diferencia). Veamos también
+que el modelo lineal truncado es incluso mejor que el modelo ordinal, lo
+que es a priori extraño dado que el modelo lineal no está acotado ni
+tiene una estructura demasiado compatible con la escala Likert como sí
+lo tiene el modelo ordinal.
+
+Habiendo visto estos resultados, lo más probable es que esté pasando una
+de estas dos cosas (o ambas): o hay poca varianza en las respuestas a
+`Q30' o la edad no es un buen predictor de `Q30'.
+
+Con esto en mente, decidimos ver qué porcentaje de personas respondió
+cada valor de la escala para `Q30' y también visualizar la distribución
+de las edades de las personas que al menos estaban de acuerdo vs las que
+no.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Tabulación y porcentaje}
+\NormalTok{tabla }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{((df }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(Q30 }\SpecialCharTok{!=} \DecValTok{0}\NormalTok{))}\SpecialCharTok{$}\NormalTok{Q30)}
+\NormalTok{porcentaje }\OtherTok{\textless{}{-}} \FunctionTok{prop.table}\NormalTok{(tabla) }\SpecialCharTok{*} \DecValTok{100}
+\NormalTok{porcentaje\_formateado }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(porcentaje, }\DecValTok{2}\NormalTok{)}
+\FunctionTok{data.frame}\NormalTok{(}\AttributeTok{Respuesta =} \FunctionTok{names}\NormalTok{(tabla), }\AttributeTok{Porcentaje =}\NormalTok{ porcentaje\_formateado)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Respuesta Porcentaje.Var1 Porcentaje.Freq
+## 1         1               1           26.78
+## 2         2               2           12.62
+## 3         3               3           18.49
+## 4         4               4           20.94
+## 5         5               5           21.16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df}\SpecialCharTok{$}\NormalTok{Q30\_grupo }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{Q30 }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"De acuerdo (4 o 5)"}\NormalTok{, }\StringTok{"No de acuerdo (1 a 3)"}\NormalTok{)}
+\NormalTok{df\_box }\OtherTok{\textless{}{-}}\NormalTok{ df[}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{age) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{Q30\_grupo), ]}
+
+\CommentTok{\# Boxplot}
+\FunctionTok{boxplot}\NormalTok{(age }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Q30\_grupo, }\AttributeTok{data =}\NormalTok{ df\_box,}
+        \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"\#FFA07A"}\NormalTok{, }\StringTok{"\#90EE90"}\NormalTok{),}
+        \AttributeTok{main =} \StringTok{"Distribución de edad por respuesta a Q30"}\NormalTok{,}
+        \AttributeTok{ylab =} \StringTok{"Edad"}\NormalTok{,}
+        \AttributeTok{xlab =} \StringTok{"Grupo de respuesta"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tp1_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por
+lo tanto, es razonable que ninguno de los dos modelos (el lineal
+truncado y el ordinal) dé buenos resultados. Por otra parte, veamos la
+distribución de las clases en el conjunto de test
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{hist}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30, }\AttributeTok{main=}\StringTok{"Distribución de clases de Q30"}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Respuesta"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tp1_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+A pesar de que hay un desbalance de clases especialmente entre las
+respuestas \textbf{1} y \textbf{2}, no parecería que el problema viene
+por este lado. Por lo tanto, para verificar que el problema en la
+covariable, decidimos crear datos sintéticos donde se observen
+diferencias en las distribuciones de edades, y ver si el modelo ajusta
+de manera razonable a los datos. Para descartar que sea un problema de
+un posible problema del desbalance de clases, se decidió crear la misma
+distribución de clases que el conjunto de test.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+
+\NormalTok{n\_total }\OtherTok{\textless{}{-}} \DecValTok{1000}
+
+\CommentTok{\#n\_per\_group \textless{}{-} n\_total / 5}
+\NormalTok{n\_per\_group }\OtherTok{\textless{}{-}}\NormalTok{ n\_total}\SpecialCharTok{*}\FunctionTok{table}\NormalTok{(df\_test\_30}\SpecialCharTok{$}\NormalTok{Q30)}\SpecialCharTok{/}\FunctionTok{nrow}\NormalTok{(df\_test\_30)}
+
+\NormalTok{likert\_levels }\OtherTok{\textless{}{-}} \DecValTok{1}\SpecialCharTok{:}\DecValTok{5}
+\NormalTok{age\_means }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{95}\NormalTok{, }\DecValTok{70}\NormalTok{, }\DecValTok{50}\NormalTok{, }\DecValTok{30}\NormalTok{, }\DecValTok{15}\NormalTok{)}
+\NormalTok{age\_sds   }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{, }\DecValTok{10}\NormalTok{, }\DecValTok{8}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{3}\NormalTok{)}
+
+\NormalTok{data\_list }\OtherTok{\textless{}{-}} \FunctionTok{lapply}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(i) \{}
+\NormalTok{  ages }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(n\_per\_group[i], }\AttributeTok{mean =}\NormalTok{ age\_means[i], }\AttributeTok{sd =}\NormalTok{ age\_sds[i])}
+\NormalTok{  ages }\OtherTok{\textless{}{-}} \FunctionTok{pmin}\NormalTok{(}\FunctionTok{pmax}\NormalTok{(ages, }\DecValTok{10}\NormalTok{), }\DecValTok{110}\NormalTok{)}
+  \FunctionTok{data.frame}\NormalTok{(}
+    \AttributeTok{Q\_synthetic =} \FunctionTok{rep}\NormalTok{(likert\_levels[i], n\_per\_group[i]),}
+    \AttributeTok{age =}\NormalTok{ ages}
+\NormalTok{  )}
+\NormalTok{\})}
+
+\NormalTok{df\_synthetic }\OtherTok{\textless{}{-}} \FunctionTok{do.call}\NormalTok{(rbind, data\_list)}
+
+\FunctionTok{boxplot}\NormalTok{(age }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Q\_synthetic, }\AttributeTok{data =}\NormalTok{ df\_synthetic, }\AttributeTok{main =} \StringTok{"Edad por respuesta Likert"}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Q\_synthetic"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Edad"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tp1_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{split }\OtherTok{\textless{}{-}} \FunctionTok{initial\_split}\NormalTok{(df\_synthetic, }\AttributeTok{prop =} \FloatTok{0.8}\NormalTok{, }\AttributeTok{strata =}\NormalTok{ Q\_synthetic)}
+\NormalTok{train\_data\_synth }\OtherTok{\textless{}{-}} \FunctionTok{training}\NormalTok{(split)}
+\NormalTok{test\_data\_synth  }\OtherTok{\textless{}{-}} \FunctionTok{testing}\NormalTok{(split)}
+
+\NormalTok{train\_data\_synth}\SpecialCharTok{$}\NormalTok{Q\_synthetic }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(train\_data\_synth}\SpecialCharTok{$}\NormalTok{Q\_synthetic, }\AttributeTok{ordered =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{test\_data\_synth}\SpecialCharTok{$}\NormalTok{Q\_synthetic  }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(test\_data\_synth}\SpecialCharTok{$}\NormalTok{Q\_synthetic, }\AttributeTok{ordered =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{modelo\_ordinal\_synth }\OtherTok{\textless{}{-}} \FunctionTok{polr}\NormalTok{(Q\_synthetic }\SpecialCharTok{\textasciitilde{}}\NormalTok{ age, }\AttributeTok{data =}\NormalTok{ train\_data\_synth, }\AttributeTok{Hess =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{preds\_synth }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_ordinal\_synth, }\AttributeTok{newdata =}\NormalTok{ test\_data\_synth)}
+\NormalTok{mae\_synth }\OtherTok{\textless{}{-}} \FunctionTok{mae}\NormalTok{(}\FunctionTok{as.numeric}\NormalTok{(preds\_synth), }\FunctionTok{as.numeric}\NormalTok{(test\_data\_synth}\SpecialCharTok{$}\NormalTok{Q\_synthetic))}
+\end{Highlighting}
+\end{Shaded}
+
+El MAE obtenido en el conjunto de test es de
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat}\NormalTok{(}\StringTok{"MAE:"}\NormalTok{, mae\_synth, }\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## MAE: 0.1039604
+\end{verbatim}
+
+Esto implica un buen ajuste para los datos sintéticos, lo que supone que
+el principal problema viene por la capacidad predictiva de \(\beta\).
+
+\subsubsection{Maybe delete}\label{maybe-delete}
+
+Ahora, podemos buscar alguna pregunta que sí muestre una diferencia más
+contundente por edad. Para eso, podemos correr este programa (en vez de
+mirar un boxplots por cada pregunta) que nos ordene a las preguntas en
+base a la diferencia de edad que tiene la población de acuerdo y la que
+no. Para comparar las edades de las poblaciones, vamos a intentar
+únicamente comparando medias (puede que no haga falta más que esto).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{max\_dif }\OtherTok{\textless{}{-}} \DecValTok{0}
+\NormalTok{max\_dif\_col }\OtherTok{\textless{}{-}} \StringTok{""}
+
+\ControlFlowTok{for}\NormalTok{ (col }\ControlFlowTok{in} \FunctionTok{colnames}\NormalTok{(df)[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{44}\NormalTok{]) \{}
+\NormalTok{  df}\SpecialCharTok{$}\NormalTok{grupos }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(df[[col]] }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"De acuerdo"}\NormalTok{, }\StringTok{"No de acuerdo"}\NormalTok{)}
+\NormalTok{  df\_box }\OtherTok{\textless{}{-}}\NormalTok{ df[}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{age) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df[[col]]), ]}
+\NormalTok{  media\_dif }\OtherTok{\textless{}{-}} \FunctionTok{abs}\NormalTok{(}\FunctionTok{mean}\NormalTok{(df\_box}\SpecialCharTok{$}\NormalTok{age[df\_box}\SpecialCharTok{$}\NormalTok{grupos }\SpecialCharTok{==} \StringTok{"De acuerdo"}\NormalTok{]) }\SpecialCharTok{{-}} \FunctionTok{mean}\NormalTok{(df\_box}\SpecialCharTok{$}\NormalTok{age[df\_box}\SpecialCharTok{$}\NormalTok{grupos }\SpecialCharTok{==} \StringTok{"No de acuerdo"}\NormalTok{]))}
+  \ControlFlowTok{if}\NormalTok{ (media\_dif }\SpecialCharTok{\textgreater{}}\NormalTok{ max\_dif) \{}
+\NormalTok{    max\_dif\_col }\OtherTok{\textless{}{-}}\NormalTok{ col}
+\NormalTok{    max\_dif }\OtherTok{\textless{}{-}}\NormalTok{ media\_dif}
+\NormalTok{  \}}
+\NormalTok{\}}
+
+\FunctionTok{print}\NormalTok{(max\_dif\_col)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Q23"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(max\_dif)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1.669733
+\end{verbatim}
+
+El programa indica que la pregunta Q23 (``I playfully insult my
+friends'') maximiza la diferencia de medias de las poblaciones a favor y
+en contra. Veámoslo en el mismo gráfico que hicimos para Q30.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df}\SpecialCharTok{$}\NormalTok{Q23\_grupo }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"De acuerdo (4 o 5)"}\NormalTok{, }\StringTok{"No de acuerdo (1 a 3)"}\NormalTok{)}
+\NormalTok{df\_box }\OtherTok{\textless{}{-}}\NormalTok{ df[}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{age) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{Q23\_grupo), ]}
+
+\FunctionTok{boxplot}\NormalTok{(age }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Q23\_grupo, }\AttributeTok{data =}\NormalTok{ df\_box,}
+        \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"\#FFA07A"}\NormalTok{, }\StringTok{"\#90EE90"}\NormalTok{),}
+        \AttributeTok{main =} \StringTok{"Distribución de edad por respuesta a Q23"}\NormalTok{,}
+        \AttributeTok{ylab =} \StringTok{"Edad"}\NormalTok{,}
+        \AttributeTok{xlab =} \StringTok{"Grupo de respuesta"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{tp1_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{Q23\_grupo)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##    De acuerdo (4 o 5) No de acuerdo (1 a 3) 
+##                228581                 60882
+\end{verbatim}
+
+Podemos observar que ahora sí hay una diferencia entre las edades de las
+poblaciones de acuerdo y en desacuerdo. Veamos si los modelos predicen
+mejor la adhesión o no a esta pregunta `Q23'.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_train\_23 }\OtherTok{\textless{}{-}}\NormalTok{ df\_train }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{filter}\NormalTok{(Q23 }\SpecialCharTok{!=} \DecValTok{0}\NormalTok{)}
+
+\NormalTok{df\_test\_23 }\OtherTok{\textless{}{-}}\NormalTok{ df\_test }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{filter}\NormalTok{(Q23 }\SpecialCharTok{!=} \DecValTok{0}\NormalTok{)}
+
+\CommentTok{\# Ordenamos en escala}
+\NormalTok{df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23\_factor }\OtherTok{\textless{}{-}} \FunctionTok{ordered}\NormalTok{(df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23,}
+                  \AttributeTok{levels =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{,}
+                  \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Muy en desacuerdo"}\NormalTok{, }\StringTok{"En desacuerdo"}\NormalTok{, }\StringTok{"Neutral"}\NormalTok{, }\StringTok{"De acuerdo"}\NormalTok{, }\StringTok{"Muy de acuerdo"}\NormalTok{))}
+
+\NormalTok{df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23\_factor }\OtherTok{\textless{}{-}} \FunctionTok{ordered}\NormalTok{(df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23,}
+                  \AttributeTok{levels =} \DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{,}
+                  \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Muy en desacuerdo"}\NormalTok{, }\StringTok{"En desacuerdo"}\NormalTok{, }\StringTok{"Neutral"}\NormalTok{, }\StringTok{"De acuerdo"}\NormalTok{, }\StringTok{"Muy de acuerdo"}\NormalTok{))}
+
+\NormalTok{modelo\_ordinal\_23 }\OtherTok{\textless{}{-}} \FunctionTok{polr}\NormalTok{(Q23\_factor }\SpecialCharTok{\textasciitilde{}}\NormalTok{ age, }\AttributeTok{data =}\NormalTok{ df\_train\_23, }\AttributeTok{Hess =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{method =} \StringTok{"logistic"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(modelo\_ordinal\_23)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## polr(formula = Q23_factor ~ age, data = df_train_23, Hess = TRUE, 
+##     method = "logistic")
+## 
+## Coefficients:
+##       Value Std. Error t value
+## age -0.0682  0.0008121  -83.98
+## 
+## Intercepts:
+##                                 Value     Std. Error t value  
+## Muy en desacuerdo|En desacuerdo   -4.4000    0.0202  -217.4886
+## En desacuerdo|Neutral             -3.5151    0.0189  -186.1118
+## Neutral|De acuerdo                -2.7912    0.0183  -152.9111
+## De acuerdo|Muy de acuerdo         -1.5235    0.0175   -86.8804
+## 
+## Residual Deviance: 565017.63 
+## AIC: 565027.63
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{modelo\_lineal }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(Q23 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ age, }\AttributeTok{data =}\NormalTok{ df\_train\_23)}
+\NormalTok{y\_pred\_train }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_lineal)}
+\NormalTok{y\_pred\_final\_train }\OtherTok{\textless{}{-}} \FunctionTok{pmin}\NormalTok{(}\FunctionTok{pmax}\NormalTok{(}\FunctionTok{round}\NormalTok{(y\_pred\_train), }\DecValTok{1}\NormalTok{), }\DecValTok{5}\NormalTok{)}
+\NormalTok{mae\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_final\_train))}
+\NormalTok{aciertos\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{==}\NormalTok{ y\_pred\_final\_train)}
+
+\NormalTok{y\_pred\_test }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(modelo\_lineal, }\AttributeTok{newdata =}\NormalTok{ df\_test\_23)}
+\NormalTok{y\_pred\_final\_test }\OtherTok{\textless{}{-}} \FunctionTok{pmin}\NormalTok{(}\FunctionTok{pmax}\NormalTok{(}\FunctionTok{round}\NormalTok{(y\_pred\_test), }\DecValTok{1}\NormalTok{), }\DecValTok{5}\NormalTok{)}
+\NormalTok{mae\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_final\_test))}
+\NormalTok{aciertos\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{==}\NormalTok{ y\_pred\_final\_test)}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Resultados para modelo lineal truncado:"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Resultados para modelo lineal truncado:"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{list}\NormalTok{(}\AttributeTok{MAE\_train =}\NormalTok{ mae\_train, }\AttributeTok{MAE\_test =}\NormalTok{ mae\_test, }\AttributeTok{exactitud\_train =}\NormalTok{ aciertos\_train, }\AttributeTok{exactitud\_test =}\NormalTok{ aciertos\_test)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $MAE_train
+## [1] 0.8977559
+## 
+## $MAE_test
+## [1] 0.9003204
+## 
+## $exactitud_train
+## [1] 0.2671684
+## 
+## $exactitud_test
+## [1] 0.2653909
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{y\_pred\_train }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{predict}\NormalTok{(modelo\_ordinal\_23))}
+\NormalTok{mae\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_train))}
+\NormalTok{aciertos\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{==}\NormalTok{ y\_pred\_train)}
+
+\NormalTok{y\_pred\_test }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{predict}\NormalTok{(modelo\_ordinal\_23, }\AttributeTok{newdata =}\NormalTok{ df\_test\_23))}
+\CommentTok{\# y\_pred\_final\_test \textless{}{-} pmin(pmax(round(y\_pred\_test), 1), 5)   innecesario, y\_pred\_test ya es un \textquotesingle{}factor\textquotesingle{}, no es como el modelo lineal}
+\NormalTok{mae\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(}\FunctionTok{abs}\NormalTok{(df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{{-}}\NormalTok{ y\_pred\_test))}
+\NormalTok{aciertos\_test }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{==}\NormalTok{ y\_pred\_test)}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Resultados para modelo ordinal logístico:"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Resultados para modelo ordinal logístico:"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{list}\NormalTok{(}\AttributeTok{MAE\_train =}\NormalTok{ mae\_train, }\AttributeTok{MAE\_test =}\NormalTok{ mae\_test, }\AttributeTok{exactitud\_train =}\NormalTok{ aciertos\_train, }\AttributeTok{exactitud\_test =}\NormalTok{ aciertos\_test)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $MAE_train
+## [1] 0.8439663
+## 
+## $MAE_test
+## [1] 0.8471729
+## 
+## $exactitud_train
+## [1] 0.524788
+## 
+## $exactitud_test
+## [1] 0.5247034
+\end{verbatim}
+
+¿Y si en vez de medir la exactitud en base a qué porcentaje de la
+población el modelo predijo exactamente su respuesta (1 a 5),
+intentaramos medir a cuántos le acierta sobre si están al menos a favor
+o no?
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Verdadero sentimiento}
+\NormalTok{grupo\_real\_train }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(df\_train\_23}\SpecialCharTok{$}\NormalTok{Q23 }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"a\_favor"}\NormalTok{, }\StringTok{"no\_a\_favor"}\NormalTok{)}
+\NormalTok{grupo\_real\_test  }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(df\_test\_23}\SpecialCharTok{$}\NormalTok{Q23  }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"a\_favor"}\NormalTok{, }\StringTok{"no\_a\_favor"}\NormalTok{)}
+
+\CommentTok{\# Predicción de sentimiento}
+\NormalTok{grupo\_pred\_train }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(y\_pred\_train }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"a\_favor"}\NormalTok{, }\StringTok{"no\_a\_favor"}\NormalTok{)}
+\NormalTok{grupo\_pred\_test  }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(y\_pred\_test  }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{5}\NormalTok{, }\StringTok{"a\_favor"}\NormalTok{, }\StringTok{"no\_a\_favor"}\NormalTok{)}
+
+\CommentTok{\# 3. Exactitud en clasificar a favor vs no a favor}
+\NormalTok{acierto\_a\_favor\_train }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(grupo\_real\_train }\SpecialCharTok{==}\NormalTok{ grupo\_pred\_train)}
+\NormalTok{acierto\_a\_favor\_test  }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(grupo\_real\_test  }\SpecialCharTok{==}\NormalTok{ grupo\_pred\_test)}
+
+\CommentTok{\# 4. Mostrar todo}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Resultados para modelo ordinal logístico:"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Resultados para modelo ordinal logístico:"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{list}\NormalTok{(}
+  \AttributeTok{MAE\_train =}\NormalTok{ mae\_train,}
+  \AttributeTok{MAE\_test =}\NormalTok{ mae\_test,}
+  \AttributeTok{exactitud\_train =}\NormalTok{ aciertos\_train,}
+  \AttributeTok{exactitud\_test =}\NormalTok{ aciertos\_test,}
+  \AttributeTok{exactitud\_grupo\_train =}\NormalTok{ acierto\_a\_favor\_train,}
+  \AttributeTok{exactitud\_grupo\_test =}\NormalTok{ acierto\_a\_favor\_test}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $MAE_train
+## [1] 0.8439663
+## 
+## $MAE_test
+## [1] 0.8471729
+## 
+## $exactitud_train
+## [1] 0.524788
+## 
+## $exactitud_test
+## [1] 0.5247034
+## 
+## $exactitud_grupo_train
+## [1] 0.7922509
+## 
+## $exactitud_grupo_test
+## [1] 0.7903022
+\end{verbatim}
+
+\subsubsection{Ejercicio 10}\label{ejercicio-10}
+
+\end{document}
