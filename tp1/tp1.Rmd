@@ -3,29 +3,31 @@ title: 'TP 1: Regresión ordinal'
 author: "Nicolás Celie, Martín Peralta, Nicolás Ian Rozenberg"
 date: '`r Sys.Date()`'
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r libraries}
+```{r libraries, warning=FALSE, message=FALSE, results='hide'}
 library(tidyverse)
 library(MASS)
 library(broom) 
 library(janitor)   
 library(rsample)
-library(rstan)
+library(ggplot2)
 ```
 
 ## Ejercicio 1
 
-```{r libraries}
+Dado que al hacer el primer análisis exploratorio nos dimos cuenta que había valores de edad completamente irrisorios, sacamos los outliers del dataset para tener datos representativos. Luego de ello, realizamos la separación en train-test dejando una proporción 80/20.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
 set.seed(123)
 
-df <- read.csv2("data/data.csv", sep="\t") %>%
+df <- read.csv2("data/data.csv", sep="\t") |> 
   as.data.frame()
 
 # Filtramos outliers
@@ -36,17 +38,12 @@ IQR <- Q3 - Q1
 limite_inferior <- Q1 - 1.5 * IQR
 limite_superior <- Q3 + 1.5 * IQR
 
-nrow(df %>% 
-  filter(age>limite_superior | age<limite_inferior)
-  )
+df <- df  |>  
+  filter(age<limite_superior,
+         age>limite_inferior)
 
-df <- df %>% 
-  filter(age<limite_superior & age>limite_inferior)
-
-# Split stratificado
-df$strata <- interaction(df$religion, df$gender, df$education, drop = TRUE)
-
-split <- initial_split(df, prop = 0.8, strata = strata)
+# Split Train - Test
+split <- initial_split(df, prop = 0.8)
 
 df_train <- training(split)
 df_test  <- testing(split)
@@ -54,7 +51,7 @@ df_test  <- testing(split)
 
 ## Ejercicio 2
 
-Se eligió la pregunta Q30: 
+Se eligió la pregunta Q30: "I think horoscopes are fun."
 
 ## Ejercicio 3
 
@@ -98,15 +95,13 @@ donde los $\theta_j$ son parámetros denominados *umbrales*, que están retringi
 
 ## Ejercicio 5
 
-Filtrando los valores que son $0$ en las respuestas (las consideramos como respuestas inválidas), ajustamos el modelo de regresión ordinal *logit*
+Observamos que había valores que no estaban dentro de la escala (particularmente el 0), por lo tanto decidimos filtrarlos ya que no los consideramos correctos para Likert. Luego, ajustamos el modelo de regresión ordinal *logit*. No sin antes acondicionar la variable Q30, convirtiéndola en factor ordenado, para usarla en la función polr.
 
-```{r}
-
-
-df_train_30 <- df_train %>% 
+```{r, warning=FALSE}
+df_train_30 <- df_train |> 
   filter(Q30 != 0)
 
-df_test_30 <- df_test %>% 
+df_test_30 <- df_test |> 
   filter(Q30 != 0)
 
 #Ordenamos en escala
@@ -121,12 +116,19 @@ df_test_30$Q30_factor <- ordered(df_test_30$Q30,
 modelo_ordinal <- polr(Q30_factor ~ age, data = df_train_30, Hess = TRUE, method = "logistic")
 summary(modelo_ordinal)
 ```
+Obtenemos el ajuste del modelo, que nos devuelve los umbrales y el valor de $\beta$ para la variable age.
+Vemos que:
+$\beta = -0.024$ lo que sugiere que al aumentar la edad, la probabilidad de estar en niveles más altos en la escala Likert va disminuyendo. Es decir, es más probable que una persona más joven esté al menos "De Acuerdo" que una persona más vieja.
+$t-value = -31.5$ lo que sugiere que la variable age tiene mucha significancia en la variable respuesta ya que posee un valor absoluto relativamente alto.
+
 ## Ejercicio 6
 
-```{r}
+Ahora queremos estimar la probabilidad de que una persona de 25 años esté al menos de acuerdo con la frase "me gustan las armas" (pregunta 9). Por lo tanto, como es una pregunta diferente a la que nosotros elegimos, vamos a filtrar, desde el dataframe completo, los 0s para esta pregunta (ya que el anterior lo habíamos filtrado por los 0s para la pregunta Q30).
+
+```{r, warning=FALSE}
 
 # Entrenamos con todos los datos en este caso
-df_9 <- df %>% 
+df_9 <- df |> 
   filter(Q9 != 0)
 
 df_9$Q9 <- ordered(df_9$Q9,
@@ -136,15 +138,29 @@ df_9$Q9 <- ordered(df_9$Q9,
 modelo_9 <- polr(Q9 ~ age, data = df_9, Hess = TRUE, method = "logistic")
 summary(modelo_9)
 ```
-La función `predict` estima la probabilidad puntual de cada opción.
+En este caso obtenemos los siguientes parámetros al ajustar:
+$\beta = -0.003$ al igual que en el caso de la pregunta Q30, al aumentar la edad la probabilidad de estar en niveles más altos en la escala Likert va disminuyendo. Sin embargo, en este caso el valor es más chico, por lo que la respuesta en función de las edades se difumina un poco ya que la distancia entre ambos es mucho más pequeña que en Q30 (que era de -0.024).
+
+$t-value = -4.4$ aquí también encontramos una diferencia grande con respecto a la pregunta Q30, y es que en este caso la significancia no es demasiado alta, lo que indica que no incorporamos demasiada información relevante a la estimación usando la edad.
+
+A continuación, usamos la función "predict", la cual estima la probabilidad puntual de cada opción y luego sumamos las instancias "De acuerdo" y "Muy de acuerdo" para responder a la pregunta enunciada.
 
 ```{r}
 probabilidades <- predict(modelo_9, newdata = data.frame(age = 25), type = "probs")
 print(probabilidades)
+DeAcuerdo <- probabilidades["De acuerdo"]
+MuyDeAcuerdo <- probabilidades["Muy de acuerdo"]
+print(paste0("Al menos de acuerdo: ", as.numeric(DeAcuerdo + MuyDeAcuerdo)))
 ```
-TODO: Sumar 'De acuerdo' con 'Muy de acuerdo'
-
 ## Ejercicio 7
+
+Implementamos la función de pérdida:
+
+$$
+L(y, \hat{y}) = \frac{1}{n} \sum_{i=1}^{n} \left| y_i - \hat{y}_i \right|
+$$
+
+La misma corresponde a la función MAE (Mean Absolute Error).
 
 ```{r}
 mae <- function(y_true, y_pred) {
@@ -156,7 +172,7 @@ mae <- function(y_true, y_pred) {
 
 Entrenamos y predecimos con el modelo lineal truncado (ejercicio 8)
 
-```{r}
+```{r, warning=FALSE, message=FALSE, results='hide'}
 modelo_lineal <- lm(Q30 ~ age, data = df_train_30)
 y_pred_train <- predict(modelo_lineal)
 y_pred_final_train <- pmin(pmax(round(y_pred_train), 1), 5)
@@ -170,11 +186,20 @@ aciertos_test <- mean(df_test_30$Q30 == y_pred_final_test)
 print("Resultados para modelo lineal truncado:")
 list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
 ```
+Obtenemos así, los siguientes resultados:
+
+
+| **Métrica**  | **Train** | **Test** |
+|--------------|-----------|----------|
+| MAE          | 1.3       | 1.29     |
+| Exactitud    | 0.18      | 0.19     |
+
+**Tabla:** Regresión Lineal Truncada: Resultados de MAE y Exactitud en los conjuntos de entrenamiento y prueba.
+
 
 Entrenamos y predecimos con el modelo de regresión ordinal (ejercicio 9)
 
-
-```{r}
+```{r, warning=FALSE, message=FALSE, results='hide'}
 y_pred_train <- as.numeric(predict(modelo_ordinal))
 mae_train <- mean(abs(df_train_30$Q30 - y_pred_train))
 aciertos_train <- mean(df_train_30$Q30 == y_pred_train)
@@ -186,19 +211,19 @@ aciertos_test <- mean(df_test_30$Q30 == y_pred_test)
 print("Resultados para modelo ordinal logístico:")
 list(MAE_train = mae_train, MAE_test = mae_test, exactitud_train = aciertos_train, exactitud_test = aciertos_test)
 ```
+| **Métrica**  | **Train** | **Test** |
+|--------------|-----------|----------|
+| MAE          | 1.95      | 1.96     |
+| Exactitud    | 0.27      | 0.27     |
 
+**Tabla:** Regresión Ordinal: Resultados de MAE y Exactitud en los conjuntos de entrenamiento y prueba.
 
-Los modelos tuvieron un mal desempeño. Además de que solo tienen una variable para predecir, lo más probable es que esté pasando una de estas dos cosas (o ambas): o hay poca varianza en las respuestas a 'Q30' o la edad no es un buen predictor de 'Q30'.
+Los modelos tuvieron un mal desempeño, dado que tener una distancia mayor a 1 en la escala Likert puede ser un cambio de respuesta de una categoría a otra y eso puede significar pasar, por ejemplo, de un "Neutro" a un "De acuerdo" (un abismo de diferencia). 
+Vemos también que el modelo lineal truncado resultó tener un mejor MAE que el modelo ordinal, lo que es a priori extraño dado que el modelo lineal no tiene una estructura compatible con la escala Likert como sí lo tiene el modelo ordinal. 
+
+Habiendo visto estos resultados, lo más probable es que esté pasando una de estas dos cosas (o ambas): o bien, hay un desbalance entre clases o la edad no es un buen predictor de 'Q30'.
 
 Con esto en mente, decidimos ver qué porcentaje de personas respondió cada valor de la escala para 'Q30' y también visualizar la distribución de las edades de las personas que al menos estaban de acuerdo vs las que no.
-
-```{r}
-# Tabulación y porcentaje
-tabla <- table(df$Q30)
-porcentaje <- prop.table(tabla) * 100
-porcentaje_formateado <- round(porcentaje, 2)
-data.frame(Respuesta = names(tabla), Porcentaje = porcentaje_formateado)
-```
 
 
 ```{r}
@@ -206,14 +231,14 @@ df$Q30_grupo <- ifelse(df$Q30 %in% 4:5, "De acuerdo (4 o 5)", "No de acuerdo (1 
 df_box <- df[!is.na(df$age) & !is.na(df$Q30_grupo), ]
 
 # Boxplot
-boxplot(age ~ Q30_grupo, data = df_box,
-        col = c("#FFA07A", "#90EE90"),
+boxplot(age ~ Q30, data = (df |> filter(Q30 != 0)),
+        #col = c("#FFA07A", "#90EE90", ),
         main = "Distribución de edad por respuesta a Q30",
         ylab = "Edad",
-        xlab = "Grupo de respuesta")
+        xlab = "Respuesta")
 ```
 
-Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por lo tanto, es razonable que ninguno de los dos modelos (el lineal truncado y el ordinal) de buenos resultados. Por otra parte, veamos la distribución de las clases en el conjunto de test
+Acá se ve claramente cómo casi no hay una diferencia clara por edad. Por lo tanto, es razonable que ninguno de los dos modelos (el lineal truncado y el ordinal) dé buenos resultados. Por otra parte, veamos la distribución de las clases en el conjunto de test
 
 ```{r}
 hist(df_test_30$Q30, main="Distribución de clases de Q30", xlab = "Respuesta")
@@ -305,10 +330,10 @@ table(df$Q23_grupo)
 ```
 Podemos observar que ahora sí hay una diferencia entre las edades de las poblaciones de acuerdo y en desacuerdo. Veamos si los modelos predicen mejor la adhesión o no a esta pregunta 'Q23'.
 ```{r}
-df_train_23 <- df_train %>% 
+df_train_23 <- df_train |> 
   filter(Q23 != 0)
 
-df_test_23 <- df_test %>% 
+df_test_23 <- df_test |> 
   filter(Q23 != 0)
 
 # Ordenamos en escala
@@ -385,48 +410,9 @@ list(
 ### Ejercicio 10
 
 
-```{r}
-library(rstanarm)
-```
-```{r}
-modelo_bayes <- stan_polr(
-  Q30_factor ~ age,
-  data = df_train_30,
-  prior = normal(0, 2),
-  seed = 1,
-  chains = 1,
-  refresh = 1,
-  iter = 50
-)
 
 
-modelo_bayes <- stan_polr(
-  Q30_factor ~ age,
-  data = df_train_30,
-  prior = R2(location = 0.4, what = "mean"),  # ~equivale a varianza intermedia en β
-  seed = 1,
-  chains = 1,
-  iter= 50,
-  refresh = 5
-)
 
-for (i in (1:10)) {
-  location_mod = i/25
-  modelo_bayes <- stan_polr(
-    Q30_factor ~ age,
-    data = df_train_30,
-    prior = R2(location = location_mod, what = "mean"),  # ~equivale a varianza intermedia en β
-    seed = 1,
-    chains = 1,
-    iter= 50,
-    refresh = 5
-  )
-  
-  posterior <- as.data.frame(modelo_bayes)
-  hist(posterior$age, breaks=40, main="Posterior de β (edad)")
-}
-
-```
 
 
 ### Ejercicio 11
