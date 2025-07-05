@@ -18,6 +18,8 @@ library(broom)
 library(janitor)   
 library(rsample)
 library(lme4)
+library(mgcv)
+library(dplyr)
 
 ```
 ## Ejercicio 1: EDA
@@ -48,11 +50,27 @@ df_titles_train$country <- as.factor(df_titles_train$country)
 
 ### (a) Efectos fijos
 
+Tenemos que
+
+$$
+\text{imdb}_{pelicula} = \beta_{\text{pais(pelicula)}} + \varepsilon_{pelicula}
+$$
+donde $\varepsilon_{pelicula}$ es el error irreducible
+
 ```{r}
 fixed_model <- lm(imdb_score ~ country - 1, data = df_titles_train)
 ```
 
+
 ### (b) Efectos aleatorios
+
+Tenemos que
+
+$$
+\text{imdb}_{pelicula} = \beta_0 + u_{\text{pais(pelicula)}} + \varepsilon_{pelicula}
+$$
+
+donde $u_{\text{pais(pelicula)}} \sim \mathcal{N}(0, \sigma_{u}^2)$ es el efecto aleatorio del país al que corresponde la película.
 
 ```{r}
 random_model <- lmer(imdb_score ~ 1 + (1 | country), data = df_titles_train)
@@ -98,4 +116,140 @@ ggplot(comparison_df_long, aes(x = reorder(country, estimate), y = estimate,
 
 ```
 
+De aquí se puede observar que las predicciones del modelo de efectos aleatorios se encuentran más atraídas al promedio global, ya que no hay un parámetro libre para cada país. Sin embargo, cuando se cuenta con una cantidad de datos suficiente y la predicción del modelo de efectos fijos se aleja del promedio global, el de efectos aleatorios también lo hará.
+
+
+## Ejercicio 3
+
+Consideramos que la popularidad está dada por imdb_score.
+
+```{r}
+
+k_values <- c(1, 2, 3, 5, 10, 20, 50)
+
+prediction_df <- df_titles_train %>%
+  dplyr::select(release_year) %>%
+  distinct() %>%
+  arrange(release_year)
+
+for (k in k_values) {
+  model <- gam(imdb_score ~ s(release_year, bs = "cr", k = k), data = df_titles_train,
+               sp = 0)  # sp = 0 implica lambda = 0
+  prediction_df[[paste0("k", k)]] <- predict(model, newdata = prediction_df)
+}
+
+prediction_long <- prediction_df %>%
+  pivot_longer(cols = starts_with("k"),
+               names_to = "k",
+               names_prefix = "k",
+               values_to = "predicted_popularity")
+
+prediction_long <- prediction_long %>%
+  mutate(k = factor(k, levels = as.character(sort(as.numeric(unique(k))))))
+
+ggplot(prediction_long, aes(x = release_year, y = predicted_popularity, color = k)) +
+  geom_line(size = 1.2) +
+  labs(title = "Curvas estimadas con spline cúbico para distintos valores de k",
+       x = "Año de lanzamiento", y = "Popularidad estimada",
+       color = "k (número de nodos)") +
+  theme_minimal() +
+  scale_color_viridis_d()
+
+```
+Vemos que al sólo variar la cantidad de nodos, la rugosidad de los splines conseguidos efectivamente aumenta.
+
+## Ejercicio 4
+
+Para estimar el efecto causal de Comedia en Score, los subconjuntos de las variables Año, Duracion, País que se elijan deben producir que Comedia y Score se encuentren d-separadas. O equivalentemente, deben ser subconjuntos tal que Comedia y Score sean independientes condicional al subconjunto de variables. Como Año, Duracion, País son todas variables observables, cualquier subconjunto sirve en la práctica.
+
+En este caso, se cuenta con tres back-door paths:
+
+- C1: Comedia, Duracion, Score
+- C2: Comedia, Duracion, Año, Score
+- C3: Comedia, País, Duración, Score
+- C4: Comedia, País, Duracion, Año, Score
+
+Analicemos caso por caso, de acuerdo con cómo fue enunciado el criterio de d-separación en clase:
+
+- El subconjunto vacío NO va ya que C1 no está bloqueado.
+- El subconjunto Año NO va ya que C1 no está bloqueado.
+- El subconjunto País NO va ya que C1 no está bloqueado.
+- El subconjunto Duración NO va ya que C2 no está bloqueado (pues Duración es un collider pero pertenece al subconjunto (no se cumple segunda disyunción) y no existe alguna otra variable en el subconjunto que la salve para que se cumpla la primera disyunción). Lo mismo pasa con C4.
+- El subconjunto Año,País NO va ya que C1 no está bloqueado 
+- El subconjunto Año,Duración SÍ va.
+- El subconjunto País,Duración SÍ va.
+- El subconjuto Año,País,Duración SÍ va.
+
+## Ejercicio 5
+```{r}
+set.seed(123)
+```
+
+
+### Modelo 1: Regresión lineal con efectos fijos por país
+
+```{r}
+
+folds <- createFolds(df_titles_clean$imdb_score, k = 5)
+rmse_lmer <- c()
+
+for (i in seq_along(folds)) {
+  train_data <- df_titles_clean[-folds[[i]], ]
+  test_data  <- df_titles_clean[folds[[i]], ]
+  
+  model1 <- lm(imdb_score ~ release_year + runtime + popularity + genre + country, data = df_train)
+  pred1 <- predict(model1, newdata = df_test, allow.new.levels = TRUE)
+  rmse_lmer[i] <- RMSE(pred1, df_test$imdb_score)
+}
+
+rmse1 <- mean(rmse_lmer)
+```
+
+### Modelo 2: Efectos aleatorios por país
+
+```{r}
+folds <- createFolds(df_titles_clean$imdb_score, k = 5)
+rmse_lmer <- c()
+
+for (i in seq_along(folds)) {
+  train_data <- df_titles_clean[-folds[[i]], ]
+  test_data  <- df_titles_clean[folds[[i]], ]
+  
+  m <- lmer(imdb_score ~ release_year + runtime + popularity + genre + (1 | country),
+            data = train_data)
+  
+  preds <- predict(m, newdata = test_data, allow.new.levels = TRUE)
+  rmse_lmer[i] <- RMSE(preds, test_data$imdb_score)
+}
+
+rmse2 <- mean(rmse_lmer)
+```
+
+### Modelo 3: GAM con splines sobre release_year y runtime
+
+```{r}
+rmse_gam <- c()
+
+for (i in seq_along(folds)) {
+  train_data <- df_titles_clean[-folds[[i]], ]
+  test_data  <- df_titles_clean[folds[[i]], ]
+  
+  g <- gam(imdb_score ~ s(release_year) + s(runtime) + popularity + genre + country,
+           data = train_data)
+  
+  preds <- predict(g, newdata = test_data)
+  rmse_gam[i] <- RMSE(preds, test_data$imdb_score)
+}
+
+rmse3 <- mean(rmse_gam)
+```
+
+
+```{r}
+data.frame(
+  Modelo = c("Efectos fijos", "Efectos aleatorios", "GAM con splines"),
+  RMSE_promedio = c(rmse1, rmse2, rmse3)
+) %>%
+  arrange(RMSE_promedio)
+```
 
