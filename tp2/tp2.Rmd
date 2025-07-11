@@ -20,13 +20,17 @@ library(rsample)
 library(lme4)
 library(mgcv)
 library(dplyr)
-
+library(ggplot2)
+library(tidytext)
+library(stringr)
+library(tidyr)
 ```
 ## Ejercicio 1: EDA
 
 ```{r}
 df_credits_train <- read.csv("credits_train.csv")
 df_titles_train <- read.csv("titles_train.csv")
+
 
 df_titles_train <- df_titles_train %>% # TODO: Chequear porcentaje de eliminados
   mutate(
@@ -38,13 +42,105 @@ df_titles_train$country <- as.factor(df_titles_train$country)
 ```
 
 ```{r}
-#head(df_credits_train)
+head(df_credits_train)
 ```
 
 
 ```{r}
-#head(df_titles_train)
+head(df_titles_train)
 ```
+
+
+```{r}
+data("stop_words")
+
+df_texto <- df_titles_train %>%
+  mutate(texto_completo = paste(title, description, sep = " ")) %>%
+  dplyr::select(id, imdb_score, texto_completo)
+
+df_tokens <- df_texto %>%
+  unnest_tokens(word, texto_completo) %>%
+  filter(str_length(word) >= 4) %>%
+  anti_join(stop_words, by = "word") %>%
+  distinct(id, word, .keep_all = TRUE)
+
+df_palabras_ponderado <- df_tokens %>%
+  group_by(word) %>%
+  summarise(
+    n_apariciones = n(),
+    promedio_score = mean(imdb_score),
+    sd_score = sd(imdb_score),
+    q25 = quantile(imdb_score, 0.25),
+    q75 = quantile(imdb_score, 0.75)
+  ) %>%
+  filter(n_apariciones >= 10) %>%
+  mutate(ranking_score = promedio_score * log(n_apariciones + 1)) %>%
+  arrange(desc(ranking_score)) %>%
+  ungroup()
+
+df_palabras_sin_ponderar <- df_tokens %>%
+  group_by(word) %>%
+  summarise(
+    n_apariciones = n(),
+    promedio_score = mean(imdb_score),
+    sd_score = sd(imdb_score),
+    q25 = quantile(imdb_score, 0.25),
+    q75 = quantile(imdb_score, 0.75)
+  ) %>%
+  filter(n_apariciones >= 10) %>%
+  mutate(ranking_score = promedio_score) %>%
+  arrange(desc(ranking_score)) %>%
+  ungroup()
+```
+
+
+```{r}
+top_palabras <- df_palabras_ponderado %>% slice_max(ranking_score, n = 25)
+
+ggplot(top_palabras, aes(x = reorder(word, ranking_score), y = promedio_score)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top palabras asociadas a mayor puntaje IMDb (ponderado por cantidad de apariciones)",
+       x = "Palabra", y = "Promedio IMDb") +
+  theme_minimal()
+```
+
+```{r}
+top_palabras <- df_palabras_sin_ponderar %>% slice_max(ranking_score, n = 25)
+
+ggplot(top_palabras, aes(x = reorder(word, ranking_score), y = promedio_score)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top palabras asociadas a mayor puntaje IMDb (sin ponderar)",
+       x = "Palabra", y = "Promedio IMDb") +
+  theme_minimal()
+```
+
+
+
+```{r}
+bottom_palabras <- df_palabras_ponderado %>%
+  slice_min(ranking_score, n = 25)
+
+ggplot(bottom_palabras, aes(x = reorder(word, -ranking_score), y = promedio_score)) +
+  geom_col(fill = "firebrick") +
+  coord_flip() +
+  labs(title = "Palabras asociadas a menor puntaje IMDb (ponderado por cantidad de apariciones)",
+       x = "Palabra", y = "Promedio IMDb") +
+  theme_minimal()
+```
+```{r}
+bottom_palabras <- df_palabras_sin_ponderar %>%
+  slice_min(ranking_score, n = 25)
+
+ggplot(bottom_palabras, aes(x = reorder(word, -ranking_score), y = promedio_score)) +
+  geom_col(fill = "firebrick") +
+  coord_flip() +
+  labs(title = "Palabras asociadas a menor puntaje IMDb (ponderado por cantidad de apariciones)",
+       x = "Palabra", y = "Promedio IMDb") +
+  theme_minimal()
+```
+
 
 ## Ejercicio 2
 
