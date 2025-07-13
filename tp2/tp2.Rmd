@@ -50,6 +50,130 @@ head(df_credits_train)
 head(df_titles_train)
 ```
 
+### (a) Géneros asociados al puntaje del título
+
+```{r}
+df_long <- df_titles_train %>%
+  # 1) Quitar corchetes y comillas
+  mutate(
+    genres_clean = str_remove_all(genres, "\\[|\\]|'"),
+    # 2) Marcar cadenas vacías o NA como “sin género”
+    genres_clean = if_else(
+      genres_clean == "" | is.na(genres_clean),
+      "sin género",
+      genres_clean
+    )
+  ) %>%
+  # 3) Separar en filas por coma
+  separate_rows(genres_clean, sep = ",\\s*") %>%
+  # 4) Volver a etiquetar cualquier fila vacía tras el separate_rows
+  mutate(
+    genre = if_else(
+      genres_clean == "" | is.na(genres_clean),
+      "sin género",
+      genres_clean
+    )
+  ) %>%
+  # 5) Calcular mean_score y reordenar niveles de genre
+  group_by(genre) %>%
+  mutate(mean_score = mean(imdb_score, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(genre = reorder(genre, mean_score))
+
+ggplot(df_long, aes(x = genre, y = imdb_score)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribución de puntajes IMDb por género",
+    x = "Género (ordenado por media)",
+    y = "IMDb Score"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+df_promedio_genero <- df_long_counted %>%
+  group_by(genre) %>%
+  summarise(
+    promedio_score = sum(imdb_score * count) / sum(count),
+    n_movies = n_distinct(id),
+    n_apariciones = sum(count)
+  ) %>%
+  filter (n_apariciones >= 10)
+
+plot(genre, promedio_score, data = df_promedio_genero)
+
+```
+
+
+### (b) Actores asociados al puntaje del título
+
+```{r}
+df_joined <- df_titles_train %>%
+  inner_join(df_credits_train, by = "id")
+
+df_actors <- df_joined %>%
+  filter(role == "ACTOR") %>%
+  group_by(name) %>%
+  mutate(n_participations = n()) %>%
+  ungroup() %>%
+  filter(n_participations > quantile(n_participations, 0.5))
+
+top_actors <- df_actors %>%
+  group_by(name) %>%
+  summarise(
+    mean_score = mean(imdb_score, na.rm = TRUE),
+    n = n()
+  ) %>%
+  slice_max(mean_score, n = 15) %>%
+  pull(name)
+
+df_top <- df_actors %>%
+  filter(name %in% top_actors) %>%
+  mutate(name = fct_reorder(name, imdb_score, .fun = mean))
+
+ggplot(df_top, aes(x = name, y = imdb_score)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribución de IMDb Score de los 15 actores con mejor promedio",
+    x = "Actor",
+    y = "IMDb Score"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+df_directors <- df_joined %>%
+  filter(role == "DIRECTOR") %>%
+  group_by(name) %>%
+  mutate(n_participations = n()) %>%
+  ungroup() %>%
+  filter(n_participations > quantile(n_participations, 0.5))
+
+top_directors <- df_directors %>%
+  group_by(name) %>%
+  summarise(
+    mean_score = mean(imdb_score, na.rm = TRUE),
+    n = n()
+  ) %>%
+  slice_max(mean_score, n = 15) %>%
+  pull(name)
+
+df_top <- df_directors %>%
+  filter(name %in% top_directors) %>%
+  mutate(name = fct_reorder(name, imdb_score, .fun = mean))
+
+ggplot(df_top, aes(x = name, y = imdb_score)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribución de IMDb Score de los 15 directores con mejor promedio",
+    x = "Actor",
+    y = "IMDb Score"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### (c) Palabras asociadas al puntaje del título
 
 ```{r}
 data("stop_words")
@@ -64,40 +188,30 @@ df_tokens <- df_texto %>%
   anti_join(stop_words, by = "word") %>%
   distinct(id, word, .keep_all = TRUE)
 
-df_palabras_ponderado <- df_tokens %>%
-  group_by(word) %>%
+df_tokens_counted <- df_tokens %>%
+  group_by(word, id) %>%
   summarise(
-    n_apariciones = n(),
-    promedio_score = mean(imdb_score),
-    sd_score = sd(imdb_score),
-    q25 = quantile(imdb_score, 0.25),
-    q75 = quantile(imdb_score, 0.75)
-  ) %>%
-  filter(n_apariciones >= 10) %>%
-  mutate(ranking_score = promedio_score * log(n_apariciones + 1)) %>%
-  arrange(desc(ranking_score)) %>%
-  ungroup()
+    count = n(),
+    imdb_score = first(imdb_score),
+    .groups = "drop"
+  )
 
-df_palabras_sin_ponderar <- df_tokens %>%
+df_palabras_ponderado <- df_tokens_counted %>%
   group_by(word) %>%
   summarise(
-    n_apariciones = n(),
-    promedio_score = mean(imdb_score),
-    sd_score = sd(imdb_score),
-    q25 = quantile(imdb_score, 0.25),
-    q75 = quantile(imdb_score, 0.75)
+    promedio_score = sum(imdb_score * count) / sum(count),
+    n_movies = n_distinct(id),
+    n_apariciones = sum(count)
   ) %>%
-  filter(n_apariciones >= 10) %>%
-  mutate(ranking_score = promedio_score) %>%
-  arrange(desc(ranking_score)) %>%
-  ungroup()
+  filter (n_apariciones >= 10)
+
 ```
 
 
 ```{r}
-top_palabras <- df_palabras_ponderado %>% slice_max(ranking_score, n = 25)
+top_palabras <- df_palabras_ponderado %>% slice_max(promedio_score, n = 25)
 
-ggplot(top_palabras, aes(x = reorder(word, ranking_score), y = promedio_score)) +
+ggplot(top_palabras, aes(x = reorder(word, promedio_score), y = promedio_score)) +
   geom_col(fill = "steelblue") +
   coord_flip() +
   labs(title = "Top palabras asociadas a mayor puntaje IMDb (ponderado por cantidad de apariciones)",
@@ -105,42 +219,18 @@ ggplot(top_palabras, aes(x = reorder(word, ranking_score), y = promedio_score)) 
   theme_minimal()
 ```
 
-```{r}
-top_palabras <- df_palabras_sin_ponderar %>% slice_max(ranking_score, n = 25)
-
-ggplot(top_palabras, aes(x = reorder(word, ranking_score), y = promedio_score)) +
-  geom_col(fill = "steelblue") +
-  coord_flip() +
-  labs(title = "Top palabras asociadas a mayor puntaje IMDb (sin ponderar)",
-       x = "Palabra", y = "Promedio IMDb") +
-  theme_minimal()
-```
-
-
 
 ```{r}
 bottom_palabras <- df_palabras_ponderado %>%
-  slice_min(ranking_score, n = 25)
+  slice_min(promedio_score, n = 25)
 
-ggplot(bottom_palabras, aes(x = reorder(word, -ranking_score), y = promedio_score)) +
+ggplot(bottom_palabras, aes(x = reorder(word, -promedio_score), y = promedio_score)) +
   geom_col(fill = "firebrick") +
   coord_flip() +
   labs(title = "Palabras asociadas a menor puntaje IMDb (ponderado por cantidad de apariciones)",
        x = "Palabra", y = "Promedio IMDb") +
   theme_minimal()
 ```
-```{r}
-bottom_palabras <- df_palabras_sin_ponderar %>%
-  slice_min(ranking_score, n = 25)
-
-ggplot(bottom_palabras, aes(x = reorder(word, -ranking_score), y = promedio_score)) +
-  geom_col(fill = "firebrick") +
-  coord_flip() +
-  labs(title = "Palabras asociadas a menor puntaje IMDb (ponderado por cantidad de apariciones)",
-       x = "Palabra", y = "Promedio IMDb") +
-  theme_minimal()
-```
-
 
 ## Ejercicio 2
 
@@ -252,7 +342,7 @@ ggplot(prediction_long, aes(x = release_year, y = predicted_popularity, color = 
   scale_color_viridis_d()
 
 ```
-Vemos que al sólo variar la cantidad de nodos, la rugosidad de los splines conseguidos efectivamente aumenta.
+Vemos que al sólo aumentar la cantidad de nodos sin variar la regularización, la rugosidad de los splines conseguidos efectivamente aumenta, ya que cada nodo agrega más grados de libertad, lo que permite que el spline se adapte más finamente a los datos.
 
 ## Ejercicio 4
 
@@ -285,20 +375,55 @@ set.seed(123)
 ### Modelo 1: Regresión lineal con efectos fijos por país
 
 ```{r}
+# 1) IDs únicos de películas a partir de df_long
+movie_ids <- unique(df_long$id)
 
-folds <- createFolds(df_titles_clean$imdb_score, k = 5)
-rmse_lmer <- c()
+# 2) Crear folds sobre esos IDs
+folds_ids <- createFolds(movie_ids, k = 5)
 
-for (i in seq_along(folds)) {
-  train_data <- df_titles_clean[-folds[[i]], ]
-  test_data  <- df_titles_clean[folds[[i]], ]
+rmse_vals <- numeric(length(folds_ids))
+
+for (i in seq_along(folds_ids)) {
+  # 3) IDs de test para este fold
+  test_movies <- movie_ids[folds_ids[[i]]]
   
-  model1 <- lm(imdb_score ~ release_year + runtime + popularity + genre + country, data = df_train)
-  pred1 <- predict(model1, newdata = df_test, allow.new.levels = TRUE)
-  rmse_lmer[i] <- RMSE(pred1, df_test$imdb_score)
+  # 4) Split de df_long por película
+  train_data <- df_long %>% filter(!id %in% test_movies)
+  test_data  <- df_long %>% filter( id %in% test_movies)
+  
+  # 5) Ajustar niveles de factor según train_data
+  train_data <- train_data %>%
+    mutate(
+      genre   = factor(genre),
+      country = factor(country)
+    )
+  test_data <- test_data %>%
+    mutate(
+      genre   = factor(genre,   levels = levels(train_data$genre)),
+      country = factor(country, levels = levels(train_data$country))
+    )
+  
+  # 6) Entrenar en train_data
+  model1 <- lm(imdb_score ~ release_year + runtime + imdb_votes + genre + country,
+               data = train_data)
+  
+  # 7) Predecir en test_data
+  preds <- predict(model1, newdata = test_data, allow.new.levels = TRUE)
+  
+  df_pred <- test_data %>%
+    mutate(pred = preds) %>%
+    group_by(id) %>%
+    summarise(
+      pred_mean = mean(pred),
+      true_score = first(imdb_score),
+      .groups = "drop"
+    )
+  
+  rmse_vals[i] <- RMSE(df_pred$pred_mean, df_pred$true_score)
 }
 
-rmse1 <- mean(rmse_lmer)
+# 9) RMSE promedio
+mean(rmse_vals)
 ```
 
 ### Modelo 2: Efectos aleatorios por país
