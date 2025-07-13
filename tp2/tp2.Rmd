@@ -24,15 +24,19 @@ library(ggplot2)
 library(tidytext)
 library(stringr)
 library(tidyr)
+library(caret)
 ```
 ## Ejercicio 1: EDA
+```{r}
+setwd("~/R Projects/materia_metodos_estadisticos/tp2")
+```
 
 ```{r}
-df_credits_train <- read.csv("credits_train.csv")
-df_titles_train <- read.csv("titles_train.csv")
+df_credits_train <- read.csv("./credits_train.csv")
+df_titles_train <- read.csv("./titles_train.csv")
 
 
-df_titles_train <- df_titles_train %>% # TODO: Chequear porcentaje de eliminados
+df_titles_train <- df_titles_train %>%
   mutate(
     country = str_extract(production_countries, "[A-Z]{2}")
   ) %>%
@@ -41,32 +45,20 @@ df_titles_train <- df_titles_train %>% # TODO: Chequear porcentaje de eliminados
 df_titles_train$country <- as.factor(df_titles_train$country)
 ```
 
-```{r}
-head(df_credits_train)
-```
-
-
-```{r}
-head(df_titles_train)
-```
 
 ### (a) Géneros asociados al puntaje del título
 
 ```{r}
 df_long <- df_titles_train %>%
-  # 1) Quitar corchetes y comillas
   mutate(
     genres_clean = str_remove_all(genres, "\\[|\\]|'"),
-    # 2) Marcar cadenas vacías o NA como “sin género”
     genres_clean = if_else(
       genres_clean == "" | is.na(genres_clean),
       "sin género",
       genres_clean
     )
   ) %>%
-  # 3) Separar en filas por coma
   separate_rows(genres_clean, sep = ",\\s*") %>%
-  # 4) Volver a etiquetar cualquier fila vacía tras el separate_rows
   mutate(
     genre = if_else(
       genres_clean == "" | is.na(genres_clean),
@@ -74,7 +66,6 @@ df_long <- df_titles_train %>%
       genres_clean
     )
   ) %>%
-  # 5) Calcular mean_score y reordenar niveles de genre
   group_by(genre) %>%
   mutate(mean_score = mean(imdb_score, na.rm = TRUE)) %>%
   ungroup() %>%
@@ -97,14 +88,18 @@ df_promedio_genero <- df_long_counted %>%
     n_movies = n_distinct(id),
     n_apariciones = sum(count)
   ) %>%
-  filter (n_apariciones >= 10)
+  filter(n_apariciones >= 10)
 
 plot(genre, promedio_score, data = df_promedio_genero)
 
 ```
 
+Vemos que hay cierta variación en los puntajes de los géneros. Las de horror tienen una media puntaje notablemente más baja que las demás, mientras que las películas de guerra, historia, y documentales son las que tienen los mejores puntajes.
 
 ### (b) Actores asociados al puntaje del título
+
+Nos quedamos con los actores que tienen más del percentil 75 de cantidad de participaciones en películas, y más del percentil 75 en su mediana de popularidad (imdb_votes). Este último filtro es para evitar encontrarnos con actores que tienen muchas participaciones en este dataset, pero que no sea confiable que posean más en un dataset de prueba.
+Luego, nos fijamos si hay outliers.
 
 ```{r}
 df_joined <- df_titles_train %>%
@@ -113,70 +108,78 @@ df_joined <- df_titles_train %>%
 df_actors <- df_joined %>%
   filter(role == "ACTOR") %>%
   group_by(name) %>%
-  mutate(n_participations = n()) %>%
+  mutate(
+    n_participations = n(),
+    median_popularity = median(imdb_votes, na.rm = TRUE)
+  ) %>%
   ungroup() %>%
-  filter(n_participations > quantile(n_participations, 0.5))
+  filter(n_participations > quantile(n_participations, 0.75) &
+         median_popularity > quantile(median_popularity, 0.75, na.rm = TRUE))
 
-top_actors <- df_actors %>%
+actors_distribution <- df_actors %>%
   group_by(name) %>%
   summarise(
-    mean_score = mean(imdb_score, na.rm = TRUE),
+    median_score = median(imdb_score, na.rm = TRUE),
     n = n()
-  ) %>%
-  slice_max(mean_score, n = 15) %>%
-  pull(name)
+  )
 
-df_top <- df_actors %>%
-  filter(name %in% top_actors) %>%
-  mutate(name = fct_reorder(name, imdb_score, .fun = mean))
-
-ggplot(df_top, aes(x = name, y = imdb_score)) +
-  geom_boxplot() +
-  labs(
-    title = "Distribución de IMDb Score de los 15 actores con mejor promedio",
-    x = "Actor",
-    y = "IMDb Score"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggplot(actors_distribution, aes(y = median_score)) +
+  geom_boxplot(fill = "tomato", color = "black") +
+  labs(title = "Boxplot de Median Score", y = "Median Score") +
+  theme_minimal()
 ```
+
+Vemos que hay un único outlier. Veamos quien es
+
+```{r}
+q1 <- quantile(actors_distribution$median_score, 0.25, na.rm = TRUE)
+q3 <- quantile(actors_distribution$median_score, 0.75, na.rm = TRUE)
+iqr <- q3 - q1
+lim_inf <- q1 - 1.5 * iqr
+lim_sup <- q3 + 1.5 * iqr
+
+outliers_actors_distribution <- actors_distribution[actors_distribution$median_score < lim_inf | actors_distribution$median_score > lim_sup, ]
+
+outlier_actors <- outliers_actors_distribution$name
+
+print(outlier_actors)
+```
+
+Hagamos lo mismo pero para los directores.
 
 ```{r}
 df_directors <- df_joined %>%
   filter(role == "DIRECTOR") %>%
   group_by(name) %>%
-  mutate(n_participations = n()) %>%
+  mutate(
+    n_participations = n(),
+    median_popularity = median(imdb_votes, na.rm = TRUE)
+  ) %>%
   ungroup() %>%
-  filter(n_participations > quantile(n_participations, 0.5))
+  filter(n_participations > quantile(n_participations, 0.75) &
+         median_popularity > quantile(median_popularity, 0.75, na.rm = TRUE))
 
-top_directors <- df_directors %>%
+directors_distribution <- df_directors %>%
   group_by(name) %>%
   summarise(
-    mean_score = mean(imdb_score, na.rm = TRUE),
+    median_score = median(imdb_score, na.rm = TRUE),
     n = n()
-  ) %>%
-  slice_max(mean_score, n = 15) %>%
-  pull(name)
+  )
 
-df_top <- df_directors %>%
-  filter(name %in% top_directors) %>%
-  mutate(name = fct_reorder(name, imdb_score, .fun = mean))
-
-ggplot(df_top, aes(x = name, y = imdb_score)) +
-  geom_boxplot() +
-  labs(
-    title = "Distribución de IMDb Score de los 15 directores con mejor promedio",
-    x = "Actor",
-    y = "IMDb Score"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggplot(directors_distribution, aes(y = median_score)) +
+  geom_boxplot(fill = "tomato", color = "black") +
+  labs(title = "Boxplot de Median Score", y = "Median Score") +
+  theme_minimal()
 ```
+
+Vemos que no hay outliers en este caso.
 
 ### (c) Palabras asociadas al puntaje del título
 
+Ahora haremos algo parecido para las palabras. Removemos stopwords, y calculamos un promedio ponderado por cantidad de apariciones en la descripcion.
+
 ```{r}
-data("stop_words")
+# data("stop_words")
 
 df_texto <- df_titles_train %>%
   mutate(texto_completo = paste(title, description, sep = " ")) %>%
@@ -203,33 +206,33 @@ df_palabras_ponderado <- df_tokens_counted %>%
     n_movies = n_distinct(id),
     n_apariciones = sum(count)
   ) %>%
-  filter (n_apariciones >= 10)
+  filter(n_apariciones >= 10)
 
 ```
 
 
 ```{r}
-top_palabras <- df_palabras_ponderado %>% slice_max(promedio_score, n = 25)
 
-ggplot(top_palabras, aes(x = reorder(word, promedio_score), y = promedio_score)) +
-  geom_col(fill = "steelblue") +
-  coord_flip() +
-  labs(title = "Top palabras asociadas a mayor puntaje IMDb (ponderado por cantidad de apariciones)",
-       x = "Palabra", y = "Promedio IMDb") +
+ggplot(df_palabras_ponderado, aes(y = promedio_score)) +
+  geom_boxplot(fill = "tomato", color = "black") +
+  labs(title = "Boxplot de Promedio Ponderado de Scores", y = "Promedio Ponderado") +
   theme_minimal()
 ```
 
+Identifiquemos los outliers.
 
 ```{r}
-bottom_palabras <- df_palabras_ponderado %>%
-  slice_min(promedio_score, n = 25)
+q1 <- quantile(df_palabras_ponderado$promedio_score, 0.25, na.rm = TRUE)
+q3 <- quantile(df_palabras_ponderado$promedio_score, 0.75, na.rm = TRUE)
+iqr <- q3 - q1
+lim_inf <- q1 - 1.5 * iqr
+lim_sup <- q3 + 1.5 * iqr
 
-ggplot(bottom_palabras, aes(x = reorder(word, -promedio_score), y = promedio_score)) +
-  geom_col(fill = "firebrick") +
-  coord_flip() +
-  labs(title = "Palabras asociadas a menor puntaje IMDb (ponderado por cantidad de apariciones)",
-       x = "Palabra", y = "Promedio IMDb") +
-  theme_minimal()
+outliers_df_palabras_ponderado <- df_palabras_ponderado[df_palabras_ponderado$promedio_score < lim_inf | df_palabras_ponderado$promedio_score > lim_sup, ]
+
+outlier_words <- outliers_df_palabras_ponderado$word
+
+print(outlier_words)
 ```
 
 ## Ejercicio 2
@@ -307,7 +310,7 @@ De aquí se puede observar que las predicciones del modelo de efectos aleatorios
 
 ## Ejercicio 3
 
-Consideramos que la popularidad está dada por imdb_score.
+Consideramos que la popularidad está dada por imdb_votes.
 
 ```{r}
 
@@ -319,7 +322,7 @@ prediction_df <- df_titles_train %>%
   arrange(release_year)
 
 for (k in k_values) {
-  model <- gam(imdb_score ~ s(release_year, bs = "cr", k = k), data = df_titles_train,
+  model <- gam(imdb_votes ~ s(release_year, bs = "cr", k = k), data = df_titles_train,
                sp = 0)  # sp = 0 implica lambda = 0
   prediction_df[[paste0("k", k)]] <- predict(model, newdata = prediction_df)
 }
@@ -357,10 +360,10 @@ En este caso, se cuenta con tres back-door paths:
 
 Analicemos caso por caso, de acuerdo con cómo fue enunciado el criterio de d-separación en clase:
 
-- El subconjunto vacío NO va ya que C1 no está bloqueado.
-- El subconjunto Año NO va ya que C1 no está bloqueado.
+- El subconjunto vacío NO va ya que C1 y C3 no están bloqueados.
+- El subconjunto Año NO va ya que C1 y C3 no están bloqueados.
 - El subconjunto País NO va ya que C1 no está bloqueado.
-- El subconjunto Duración NO va ya que C2 no está bloqueado (pues Duración es un collider pero pertenece al subconjunto (no se cumple segunda disyunción) y no existe alguna otra variable en el subconjunto que la salve para que se cumpla la primera disyunción). Lo mismo pasa con C4.
+- El subconjunto Duración NO va ya que C2 no está bloqueado (pues Duración es un collider que pertenece al subconjunto (no se cumple segunda disyunción) y no existe alguna otra variable en el subconjunto que la salve para que se cumpla la primera disyunción). Lo mismo pasa con C4.
 - El subconjunto Año,País NO va ya que C1 no está bloqueado 
 - El subconjunto Año,Duración SÍ va.
 - El subconjunto País,Duración SÍ va.
@@ -371,106 +374,290 @@ Analicemos caso por caso, de acuerdo con cómo fue enunciado el criterio de d-se
 set.seed(123)
 ```
 
+Para este ejercicio, decidimos no incluir información acerca de los actores y directores, ya que no se ha visto que existieran actores con popularidad y cantidad de participaciones considerables que tuvieran que tengan un puntaje asociado considerablemente menor o mayor.
+También, decidimos agrupar a los países que se encuentran por debajo del percentil 33 de cantidad de películas en un grupo "Menor", para evitar que haya países que no se encuentren en algún fold a la hora de hacer K-Fold CV.
+Armamos el dataset
+```{r}
+df <- df_titles_train %>%
+  mutate(id_row = row_number())
+
+df_genres <- df %>%
+  dplyr::select(id_row, genres) %>%
+  mutate(genres = ifelse(is.na(genres) | genres == "[]", "['SIN_GENERO']", genres)) %>%
+  mutate(genres = str_remove_all(genres, "\\[|\\]|'")) %>%
+  separate_rows(genres, sep = ",\\s*") %>%
+  mutate(genres = str_trim(genres), value = 1) %>%
+  pivot_wider(names_from = genres, values_from = value, values_fill = 0, names_prefix = "genre_")
+
+df <- left_join(df, df_genres, by = "id_row")
+
+
+for (word in outlier_words) {
+  colname <- paste0("description_", word)
+  df[[colname]] <- str_count(tolower(df$description), fixed(tolower(word)))
+}
+
+df$country <- str_extract(df$production_countries, "[A-Z]{2}")
+
+country_counts <- df %>%
+  count(country)
+
+p33 <- quantile(country_counts$n, 0.33)
+
+main_countries <- country_counts %>%
+  filter(n > p33) %>%
+  pull(country)
+
+df <- df %>%
+  mutate(country = ifelse(country %in% main_countries, country, "Menor"))
+```
+
+Hay algunas películas que tienen un valor faltante en imdb_votes. Veamos cuantas son:
+
+```{r}
+sum(is.na(df$imdb_votes))
+```
+
+Son 11 películas. Para esos casos, no se considerará el valor en la fórmula.
+
+```{r}
+# df <- df %>%
+#   filter(!is.na(imdb_votes))
+```
 
 ### Modelo 1: Regresión lineal con efectos fijos por país
 
 ```{r}
-# 1) IDs únicos de películas a partir de df_long
-movie_ids <- unique(df_long$id)
+set.seed(123)
+df$country <- as.factor(df$country)
+folds   <- createFolds(df$imdb_score, k = 5)
+rmse_vals <- numeric(length(folds))
 
-# 2) Crear folds sobre esos IDs
-folds_ids <- createFolds(movie_ids, k = 5)
+for (i in seq_along(folds)) {
+  train_data <- df[-folds[[i]], ]
+  test_data  <- df[ folds[[i]], ]
 
-rmse_vals <- numeric(length(folds_ids))
+  m_impute <- gam(imdb_votes ~ s(release_year, bs = "cr", k = 10),
+                  data = train_data,
+                  subset = !is.na(imdb_votes))
 
-for (i in seq_along(folds_ids)) {
-  # 3) IDs de test para este fold
-  test_movies <- movie_ids[folds_ids[[i]]]
-  
-  # 4) Split de df_long por película
-  train_data <- df_long %>% filter(!id %in% test_movies)
-  test_data  <- df_long %>% filter( id %in% test_movies)
-  
-  # 5) Ajustar niveles de factor según train_data
-  train_data <- train_data %>%
-    mutate(
-      genre   = factor(genre),
-      country = factor(country)
-    )
-  test_data <- test_data %>%
-    mutate(
-      genre   = factor(genre,   levels = levels(train_data$genre)),
-      country = factor(country, levels = levels(train_data$country))
-    )
-  
-  # 6) Entrenar en train_data
-  model1 <- lm(imdb_score ~ release_year + runtime + imdb_votes + genre + country,
-               data = train_data)
-  
-  # 7) Predecir en test_data
-  preds <- predict(model1, newdata = test_data, allow.new.levels = TRUE)
-  
-  df_pred <- test_data %>%
-    mutate(pred = preds) %>%
-    group_by(id) %>%
-    summarise(
-      pred_mean = mean(pred),
-      true_score = first(imdb_score),
-      .groups = "drop"
-    )
-  
-  rmse_vals[i] <- RMSE(df_pred$pred_mean, df_pred$true_score)
+  idx_train_na <- which(is.na(train_data$imdb_votes))
+  if (length(idx_train_na) > 0) {
+    train_data$imdb_votes[idx_train_na] <-
+      predict(m_impute, newdata = train_data[idx_train_na, , drop = FALSE])
+  }
+
+  idx_test_na <- which(is.na(test_data$imdb_votes))
+  if (length(idx_test_na) > 0) {
+    test_data$imdb_votes[idx_test_na] <-
+      predict(m_impute, newdata = test_data[idx_test_na, , drop = FALSE])
+  }
+
+  genre_cols <- names(df)[startsWith(names(df), "genre_")]
+  desc_cols  <- names(df)[startsWith(names(df), "description_")]
+  formula_str <- paste0(
+    "imdb_score ~ runtime + imdb_votes + country + ",
+    paste(c(genre_cols, desc_cols), collapse = " + ")
+  )
+  f <- as.formula(formula_str)
+
+  # 5) Ajustar el lm y calcular RMSE
+  m     <- lm(f, data = train_data)
+  preds <- predict(m, newdata = test_data, allow.new.levels = TRUE)
+  rmse_vals[i] <- RMSE(preds, test_data$imdb_score)
 }
 
-# 9) RMSE promedio
-mean(rmse_vals)
+cat("RMSE medio:     ", mean(rmse_vals), "\n")
+cat("Desvío estándar:", sd(rmse_vals), "\n")
 ```
 
 ### Modelo 2: Efectos aleatorios por país
 
 ```{r}
-folds <- createFolds(df_titles_clean$imdb_score, k = 5)
-rmse_lmer <- c()
+set.seed(123)
+
+df$country <- as.factor(df$country)
+folds <- createFolds(df$imdb_score, k = 5)
+rmse_vals <- numeric(length(folds))
+
 
 for (i in seq_along(folds)) {
-  train_data <- df_titles_clean[-folds[[i]], ]
-  test_data  <- df_titles_clean[folds[[i]], ]
-  
-  m <- lmer(imdb_score ~ release_year + runtime + popularity + genre + (1 | country),
-            data = train_data)
+  train_data <- df[-folds[[i]], ]
+  test_data  <- df[folds[[i]], ]
+  m_impute <- gam(imdb_votes ~ s(release_year, bs = "cr", k = 10),
+                  data = train_data,
+                  subset = !is.na(imdb_votes))
+
+  idx_train_na <- which(is.na(train_data$imdb_votes))
+  if (length(idx_train_na) > 0) {
+    train_data$imdb_votes[idx_train_na] <-
+      predict(m_impute, newdata = train_data[idx_train_na, , drop = FALSE])
+  }
+
+  idx_test_na <- which(is.na(test_data$imdb_votes))
+  if (length(idx_test_na) > 0) {
+    test_data$imdb_votes[idx_test_na] <-
+      predict(m_impute, newdata = test_data[idx_test_na, , drop = FALSE])
+  }
+
+  genre_cols <- names(df)[startsWith(names(df), "genre_")]
+  desc_cols  <- names(df)[startsWith(names(df), "description_")]
+  formula_str <- paste("imdb_score ~ runtime + imdb_votes + (1 | country) +",
+                      paste(c(genre_cols, desc_cols), collapse = " + "))
+  f <- as.formula(formula_str)
+
+  m <- lmer(f, data = train_data)
   
   preds <- predict(m, newdata = test_data, allow.new.levels = TRUE)
-  rmse_lmer[i] <- RMSE(preds, test_data$imdb_score)
+  rmse_vals[i] <- RMSE(preds, test_data$imdb_score)
 }
 
-rmse2 <- mean(rmse_lmer)
+cat("RMSE medio:", mean(rmse_vals), "\n")
+cat("Desvío estándar:", sqrt(var(rmse_vals)), "\n")
 ```
 
-### Modelo 3: GAM con splines sobre release_year y runtime
+### Modelo 3: GAM con splines sobre runtime e imdb_votes
 
 ```{r}
-rmse_gam <- c()
+set.seed(123)
+df$country <- as.factor(df$country)
 
-for (i in seq_along(folds)) {
-  train_data <- df_titles_clean[-folds[[i]], ]
-  test_data  <- df_titles_clean[folds[[i]], ]
+# Definir combinaciones de smoothing parameters
+param_grid <- expand.grid(
+  sp_runtime = c(0.01, 0.1, 1),
+  sp_votes = c(0.01, 0.1, 1)
+)[1:9, ]  # Solo 6 combinaciones
+
+results <- list()
+
+for (i in 1:nrow(param_grid)) {
+  sp1 <- param_grid$sp_runtime[i]
+  sp2 <- param_grid$sp_votes[i]
   
-  g <- gam(imdb_score ~ s(release_year) + s(runtime) + popularity + genre + country,
-           data = train_data)
+  rmse_vals <- c()
+  folds <- createFolds(df$imdb_score, k = 5)
   
-  preds <- predict(g, newdata = test_data)
-  rmse_gam[i] <- RMSE(preds, test_data$imdb_score)
+  for (j in seq_along(folds)) {
+    tryCatch({
+      train_data <- df[-folds[[j]], ]
+      test_data  <- df[folds[[j]], ]
+
+      m_impute <- gam(imdb_votes ~ s(release_year, bs = "cr", k = 10),
+                  data = train_data,
+                  subset = !is.na(imdb_votes))
+
+      idx_train_na <- which(is.na(train_data$imdb_votes))
+      if (length(idx_train_na) > 0) {
+        train_data$imdb_votes[idx_train_na] <-
+          predict(m_impute, newdata = train_data[idx_train_na, , drop = FALSE])
+      }
+
+      idx_test_na <- which(is.na(test_data$imdb_votes))
+      if (length(idx_test_na) > 0) {
+        test_data$imdb_votes[idx_test_na] <-
+          predict(m_impute, newdata = test_data[idx_test_na, , drop = FALSE])
+      }
+
+      genre_cols <- names(df)[startsWith(names(df), "genre_")]
+      desc_cols  <- names(df)[startsWith(names(df), "description_")]
+
+      formula_str <- paste0(
+        "imdb_score ~ s(runtime) + s(imdb_votes) + country + ",
+        paste(c(genre_cols, desc_cols), collapse = " + ")
+      )
+      f <- as.formula(formula_str)
+
+      m <- gam(f, data = train_data, sp = c(sp1, sp2))
+      preds <- predict(m, newdata = test_data)
+
+      rmse_vals[j] <- RMSE(preds, test_data$imdb_score)
+    }, error = function(e) {
+      message("Error con sp_runtime = ", sp1, ", sp_votes = ", sp2, ", fold ", j, ": ", e$message)
+      rmse_vals[j] <- NA
+    })
+  }
+
+  results[[i]] <- list(
+    sp_runtime = sp1,
+    sp_votes = sp2,
+    mean_rmse = mean(rmse_vals, na.rm = TRUE),
+    sd_rmse = sd(rmse_vals, na.rm = TRUE)
+  )
 }
 
-rmse3 <- mean(rmse_gam)
+# Mostrar resultados
+results_df <- bind_rows(results)
+print(results_df)
 ```
 
+Nos quedamos con el modelo con splines con una cantidad de nodos dada por default, y factor de regularización de 0.1 para runtime y 0.01 para imdb_votes, ya que tiene un RMSE bajo, y una desviación estándar baja.
+
+## Ejercicio 6
 
 ```{r}
-data.frame(
-  Modelo = c("Efectos fijos", "Efectos aleatorios", "GAM con splines"),
-  RMSE_promedio = c(rmse1, rmse2, rmse3)
-) %>%
-  arrange(RMSE_promedio)
+df_titles_test <- read.csv("./titles_test.csv")
+
+df_titles_test <- df_titles_test %>%
+  mutate(id_row = row_number())
+
+df_genres <- df_titles_test %>%
+  dplyr::select(id_row, genres) %>%
+  mutate(genres = ifelse(is.na(genres) | genres == "[]", "['SIN_GENERO']", genres)) %>%
+  mutate(genres = str_remove_all(genres, "\\[|\\]|'")) %>%
+  separate_rows(genres, sep = ",\\s*") %>%
+  mutate(genres = str_trim(genres), value = 1) %>%
+  pivot_wider(names_from = genres, values_from = value, values_fill = 0, names_prefix = "genre_")
+
+df_titles_test <- left_join(df_titles_test, df_genres, by = "id_row")
+
+
+for (word in outlier_words) {
+  colname <- paste0("description_", word)
+  df_titles_test[[colname]] <- str_count(tolower(df_titles_test$description), fixed(tolower(word)))
+}
+
+df_titles_test$country <- str_extract(df_titles_test$production_countries, "[A-Z]{2}")
+
+df_titles_test <- df_titles_test %>%
+  mutate(country = ifelse(country %in% main_countries, country, "Menor"))
+
 ```
 
+Corremos el modelo
+
+```{r}
+train_data <- df
+test_data  <- df_titles_test
+
+m_impute <- gam(imdb_votes ~ s(release_year, bs = "cr", k = 10),
+                  data = train_data,
+                  subset = !is.na(imdb_votes))
+
+idx_train_na <- which(is.na(train_data$imdb_votes))
+if (length(idx_train_na) > 0) {
+  train_data$imdb_votes[idx_train_na] <-
+    predict(m_impute, newdata = train_data[idx_train_na, , drop = FALSE])
+}
+
+idx_test_na <- which(is.na(test_data$imdb_votes))
+if (length(idx_test_na) > 0) {
+  test_data$imdb_votes[idx_test_na] <-
+    predict(m_impute, newdata = test_data[idx_test_na, , drop = FALSE])
+}
+
+genre_cols <- names(df)[startsWith(names(df), "genre_")]
+desc_cols  <- names(df)[startsWith(names(df), "description_")]
+
+formula_str <- paste0(
+  "imdb_score ~ s(runtime) + s(imdb_votes) + country + ",
+  paste(c(genre_cols, desc_cols), collapse = " + ")
+)
+f <- as.formula(formula_str)
+
+m <- gam(f, data = train_data, sp = c(sp1, sp2))
+preds <- predict(m, newdata = test_data)
+```
+
+```{r}
+write.table(preds, "predicciones.csv", row.names = FALSE, col.names = FALSE, quote = TRUE)
+```
